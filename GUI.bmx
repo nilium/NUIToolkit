@@ -445,7 +445,6 @@ Type NView
 		If _bounds <> bounds Then
 			_bounds.CopyValues(bounds)
 		EndIf
-		PerformLayout()
 	End Method
 	
 	' Returns the relative clipping rect (this is usually just 0,0,width,height)
