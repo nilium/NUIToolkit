@@ -102,7 +102,7 @@ End Type
 
 Private
 
-Const BAR_WIDTH!=20
+Const BAR_WIDTH!=16
 Const BAR_PAD!=4
 
 Public
