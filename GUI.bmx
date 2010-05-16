@@ -169,6 +169,7 @@ Type NGUI
 			SetOrigin(frame.origin.x, frame.origin.y)
 			SetViewport(0, 0, gw, gh)
 			window.Draw()
+			window.DrawSubviews()
 		Next
 		
 		SetOrigin(ox, oy)
@@ -227,12 +228,12 @@ Type NWindow Extends NView
 	' Draws the window frame, if there is one
 	Method DrawFrame() Abstract
 	
-	Method Draw() Final
+	Method Draw()
 		DrawFrame()
 		Super.Draw()
 	End Method
 	
-	Method ClipsSubviews:Int() Final
+	Method ClipsSubviews:Int()
 		Return True
 	End Method
 	
@@ -354,13 +355,9 @@ Type NView
 	
 	' Draws the view.  Origin is set to the control's position on screen and the viewport is set to clip the view when drawing.
 	Method Draw()
-		If Hidden() Then
-			Return
-		EndIf
-		DrawSubviews()
 	End Method
 	
-	Method DrawSubviews() Final
+	Method DrawSubviews()
 		Local clip:NRect = New NRect
 		
 		Local tvx%, tvy%, tvw%, tvh%
@@ -408,6 +405,8 @@ Type NView
 			
 			' draw view
 			subview.Draw()
+			' draw subviews
+			subview.DrawSubviews()
 		Next
 		' undo clipping changes
 		SetOrigin(ox, oy)
