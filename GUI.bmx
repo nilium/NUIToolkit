@@ -234,7 +234,7 @@ Type NWindow Extends NView
 	End Method
 	
 	Method IsMainWindow:Int() Final
-		Return (_gui._mainWindow = Self)
+		Return (_gui And _gui._mainWindow = Self)
 	End Method
 	
 	Method MakeMainWindow:Int() Final
