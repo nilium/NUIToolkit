@@ -26,12 +26,10 @@ EndRem
 
 SuperStrict
 
-Import "Drawable.bmx"
+Import "ImageDrawable.bmx"
 
-Type NNinePatch Extends NDrawable
-	Field _img:TImage
+Type NNinePatch Extends NImageDrawable
 	Field _left_border#, _right_border#, _top_border#, _bottom_border#
-	Field _width%, _height%
 	Field _left_scale#=1.0, _right_scale#=1.0, _top_scale#=1.0, _bottom_scale#=1.0
 	
 	Method DrawRect(x#, y#, width#, height#, state%=0)
@@ -84,15 +82,22 @@ Type NNinePatch Extends NDrawable
 		EndIf
 	End Method
 	
-	Method InitWithImage:NNinePatch(img:TImage, left_border#=8, right_border#=8, top_border#=8, bottom_border#=8, border_scale#=1.0)
-		_img = img
-		_width = ImageWidth(img)
-		_height = ImageHeight(img)
-		_left_border = left_border
-		_right_border = right_border
-		_top_border = top_border
-		_bottom_border = bottom_border
-		SetAllScales(border_scale)
+	Method InitWithImage:NNinePatch(img:TImage)
+		If Super.InitWithImage(img) Then
+			SetAllScales(1.0)
+			SetAllBorders(8.0)
+		EndIf
+		Return Self
+	End Method
+	
+	Method InitWithImageAndBorders:NNinePatch(img:TImage, left_border#=8, right_border#=8, top_border#=8, bottom_border#=8, border_scale#=1.0)
+		If Super.InitWithImage(img) Then
+			_left_border = left_border
+			_right_border = right_border
+			_top_border = top_border
+			_bottom_border = bottom_border
+			SetAllScales(border_scale)
+		EndIf
 		Return Self
 	End Method
 	
@@ -108,5 +113,19 @@ Type NNinePatch Extends NDrawable
 		_right_scale=right
 		_top_scale=top
 		_bottom_scale=bottom
+	End Method
+	
+	Method SetAllBorders(border#)
+		_left_border = border
+		_right_border = border
+		_top_border = border
+		_bottom_border = border
+	End Method
+	
+	Method SetBorders(left#,right#,top#,bottom#)
+		_left_border = left
+		_right_border = right
+		_top_border = top
+		_bottom_border = bottom
 	End Method
 End Type

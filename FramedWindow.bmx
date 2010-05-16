@@ -30,7 +30,7 @@ Import "GUI.bmx"
 Import "NinePatch.bmx"
 
 Type NFramedWindow Extends NWindow
-	Global FramePatch:NDrawable = New NNinePatch.InitWithImage(LoadAnimImage("res/window.png", 256, 256, 0, 2), 10, 10, 42, 10, .6)
+	Global FramePatch:NDrawable = New NNinePatch.InitWithImageAndBorders(LoadAnimImage("res/window.png", 256, 256, 0, 2), 10, 10, 42, 10, .6)
 	Field _dragging:Int = 0 ' 1 = move window, 2 = resize
 	Field _drag_x:Int, _drag_y:Int
 	Field _twidth#, _theight#
