@@ -60,7 +60,7 @@ Type NGUI
 						
 						While top
 							Local window:NWindow = NWindow(top.Value())
-							If window.Frame(gui._temp_rect).Contains(evt.x, evt.y) Then
+							If Not window.Hidden() And window.Frame(gui._temp_rect).Contains(evt.x, evt.y) Then
 								Local frame:NRect = window.Frame(gui._temp_rect)
 								Local view:NView = window.MousePressed(evt.x - frame.origin.x, evt.y - frame.origin.y)
 								If view Then
@@ -111,7 +111,7 @@ Type NGUI
 							Local set%=0
 							'While top
 							Local window:NWindow = gui._mainWindow
-							If window Then
+							If window And Not window.Hidden() Then
 								If window.Frame(gui._temp_rect).Contains(evt.x, evt.y) Then
 									Local frame:NRect = window.Frame(gui._temp_rect)
 									Local view:NView = window.MouseMoved(evt.x - frame.origin.x, evt.y - frame.origin.y, dx, dy)
@@ -162,6 +162,9 @@ Type NGUI
 		Local gh% = GraphicsHeight()
 		
 		For Local window:NWindow = EachIn _windows
+			If window.Hidden() Then
+				Continue
+			EndIf
 			Local frame:NRect = window.Frame(_temp_rect)
 			SetOrigin(frame.origin.x, frame.origin.y)
 			SetViewport(0, 0, gw, gh)
@@ -277,6 +280,8 @@ Type NView
 	Field _min_size:NRect = New NRect ' TODO: make use of this
 	Field _temp_rect:NRect = New NRect
 	Field _text$=""
+	Field _disabled%=False
+	Field _hidden%=False
 	
 	Method InitWithFrame:NView(frame:NRect)
 		SetFrame(frame)
@@ -294,6 +299,10 @@ Type NView
 			y :- _temp_rect.origin.y
 			Local point:NPoint = New NPoint
 			For Local subview:NView = EachIn _subviews
+				If subview.Hidden() Then
+					Continue
+				EndIf
+				
 				If subview.Frame(_temp_rect).Contains(x, y) Then
 					point.Set(x-_temp_rect.origin.x, y-_temp_rect.origin.y)
 					Local view:NView = subview.MousePressed(point.x, point.y)
@@ -312,7 +321,12 @@ Type NView
 			x :- _temp_rect.origin.x
 			y :- _temp_rect.origin.y
 			Local point:NPoint = New NPoint
+			' TODO: reverse order of iteration to hit top-most first and bottom-most last
 			For Local subview:NView = EachIn _subviews
+				If subview.Hidden() Then
+					Continue
+				EndIf
+				
 				If subview.Frame(_temp_rect).Contains(x, y) Then
 					point.Set(x-_temp_rect.origin.x, y-_temp_rect.origin.y)
 					Local view:NView = subview.MouseMoved(point.x, point.y, dx, dy)
@@ -339,6 +353,9 @@ Type NView
 	
 	' Draws the view.  Origin is set to the control's position on screen and the viewport is set to clip the view when drawing.
 	Method Draw()
+		If Hidden() Then
+			Return
+		EndIf
 		DrawSubviews()
 	End Method
 	
@@ -366,6 +383,10 @@ Type NView
 		Local clipsub:Int = ClipsSubviews()
 		
 		For Local subview:NView = EachIn _subviews
+			If subview.Hidden() Then
+				Continue
+			EndIf
+			
 			' construct clipped viewport
 			subview.Bounds(_temp_rect)
 			subview.ConvertPointToScreen(_temp_rect.origin, _temp_rect.origin)
@@ -596,5 +617,22 @@ Type NView
 	Method GetText$()
 		Return _text
 	End Method
+	
+	Method SetHidden(hidden%)
+		_hidden = hidden
+	End Method
+	
+	Method Hidden%()
+		Return _hidden
+	End Method
+	
+	Method SetDisabled(disabled%)
+		_disabled = disabled
+	End Method
+	
+	Method Disabled%()
+		Return _disabled
+	End Method
 End Type
+
 
