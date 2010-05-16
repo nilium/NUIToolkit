@@ -89,12 +89,14 @@ Type NScrollbar Extends NView
 	End Method
 	
 	Method _BarPos#()
-		Return (_value/(_max-_min))*(_ScrollLength()-_BarSize()-BAR_PAD*2)
+		Return ((_value-_min)/(_max-_min))*(_ScrollLength()-_BarSize()-BAR_PAD*2)
 	End Method
 	
 	Method _setValueForOffset(off!)
 		Local sz#=_BarSize()
+		Local prev! = _value
 		SetValue((((off-_dragoff)-Double(sz*.5))/(_ScrollLength()-sz-BAR_PAD*2))*(_max-_min)+_min)
+		OnScroll(_value, prev)
 	End Method
 End Type
 
