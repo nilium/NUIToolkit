@@ -60,13 +60,13 @@ Type NScrollbar Extends NView
 	Method SetMinimum(nmin!)
 		_min = Min(nmin, _max)
 		SetValue(_value)
-		SetStep(.2 * (_min-_max))
+		SetStep(_step)
 	End Method
 	
 	Method SetMaximum(nmax!)
 		_max = Max(nmax, _min)
 		SetValue(_value)
-		SetStep(.2 * (_min-_max))
+		SetStep(_step)
 	End Method
 	
 	Method SetStep(nstep!)
