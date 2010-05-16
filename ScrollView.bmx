@@ -126,10 +126,6 @@ Type NScrollView Extends NView
 			_vbar.SetHidden(False)
 		EndIf
 		
-		If MouseDown(2) Then
-			DebugStop
-		EndIf
-		
 		_contentView.SetFrame(contentFrame)
 		_clipView.SetFrame(frame)
 		
