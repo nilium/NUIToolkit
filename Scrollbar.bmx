@@ -160,8 +160,6 @@ Type NVScrollbar Extends NScrollbar
 		Local barsize# = _BarSize()
 		Local barpos# = _BarPos()+BAR_PAD
 		NVScrollbarDrawable.DrawRect(0, barpos, BAR_WIDTH, barsize, 1)
-		
-		Super.Draw()
 	End Method
 	
 	Method _ScrollLength#()
@@ -218,12 +216,10 @@ Type NHScrollbar Extends NScrollbar
 	
 	Method Draw()
 		Local bounds:NRect = Bounds(_temp_rect)
-		NHScrollbarDrawable.DrawRect(0, 0, bounds.size.width, BAR_WIDTH)
+		NHScrollbarDrawable.DrawRect(0, 0, bounds.size.width, BAR_WIDTH, 0)
 		Local barsize# = _BarSize()
 		Local barpos# = _BarPos()+BAR_PAD
 		NHScrollbarDrawable.DrawRect(barpos, 0, barsize, BAR_WIDTH, 1)
-		
-		Super.Draw()
 	End Method
 	
 	Method _ScrollLength#()
