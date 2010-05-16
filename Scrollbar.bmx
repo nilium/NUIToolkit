@@ -34,6 +34,9 @@ Type NScrollbar Extends NView
 	Field _min!=0, _max!=100, _value!=100
 	Field _step!=20
 	
+	Field _dragging:Int=False
+	Field _dragoff%
+	
 	Method GetValue!()
 		Return _value
 	End Method
@@ -73,27 +76,37 @@ Type NScrollbar Extends NView
 	Method OnScroll:Int(value!, prev!)
 		'TODO
 	End Method
+	
+	' Returns the complete length of the scrollbar (height in the case of vertical scrolling, width for horizontal)
+	Method _ScrollLength#() Abstract
+	
+	Method _BarSize#()
+		Return Max(24, (_step/(_max-_min))*(_ScrollLength()-BAR_PAD*2))
+	End Method
+	
+	Method _BarPos#()
+		Return (_value/(_max-_min))*(_ScrollLength()-_BarSize()-BAR_PAD*2)
+	End Method
+	
+	Method _setValueForOffset(off!)
+		Local sz#=_BarSize()
+		SetValue((((off-_dragoff)-Double(sz*.5))/(_ScrollLength()-sz-BAR_PAD*2))*(_max-_min)+_min)
+	End Method
 End Type
 
+Private
+
+Const BAR_WIDTH!=20
+Const BAR_PAD!=4
+
+Public
+
 Type NVScrollbar Extends NScrollbar
-	Const BAR_WIDTH!=20
-	Const VERTICAL_PAD!=4
 	Global NVScrollbarDrawable:NDrawable = New NNinePatch.InitWithImageAndBorders(LoadAnimImage("res/vscroll.png", 64, 256, 0, 2), 0, 0, 46, 46, BAR_WIDTH/64)
-	
-	Field _dragging:Int=False
-	Field _dragy%
 	
 	Method InitWithFrame:NVScrollbar(frame:NRect)
 		Super.InitWithFrame(frame)
 		Return Self
-	End Method
-	
-	Method _BarSize#()
-		Return Max(24, (_step/(_max-_min))*(Bounds(_temp_rect).size.height-VERTICAL_PAD*2))
-	End Method
-	
-	Method _BarPos#()
-		Return (_value/(_max-_min))*(Bounds(_temp_rect).size.height-_BarSize()-VERTICAL_PAD*2)
 	End Method
 	
 	Method SetFrame(frame:NRect)
@@ -102,23 +115,18 @@ Type NVScrollbar Extends NScrollbar
 		Super.SetFrame(_temp_rect)
 	End Method
 	
-	Method _setValueForY(y!)
-		Local sz#=_BarSize()
-		SetValue((((y-_dragy)-Double(sz*.5))/(Bounds(_temp_rect).size.height-sz-VERTICAL_PAD*2))*(_max-_min)+_min)
-	End Method
-	
 	Method MousePressed:NView(x%, y%)
 		Local sz# = _BarSize()
 		Local pos# = _BarPos()
 		
-		y :- VERTICAL_PAD
+		y :- BAR_PAD
 		
 		_temp_rect.Set(0, pos, BAR_WIDTH, sz)
 		If Not _temp_rect.Contains(x, y) Then
-			_dragy=0
-			_setValueForY(y)
+			_dragoff=0
+			_setValueForOffset(y)
 		Else
-			_dragy = y-(pos+sz*.5)
+			_dragoff = y-(pos+sz*.5)
 		EndIf
 		_dragging = true
 		
@@ -127,34 +135,84 @@ Type NVScrollbar Extends NScrollbar
 	
 	Method MouseMoved:NView(x%, y%, dx%, dy%)
 		If _dragging Then
-			y :- VERTICAL_PAD
-			_setValueForY(y)
+			_setValueForOffset(y-BAR_PAD)
 		EndIf
 	End Method
 	
 	Method MouseReleased:Int(x%, y%)
-		_setValueForY(y-VERTICAL_PAD)
+		_setValueForOffset(y-BAR_PAD)
 		_dragging = False
 	End Method
 	
 	Method Draw()
-		
 		Local bounds:NRect = Bounds(_temp_rect)
 		NVScrollbarDrawable.DrawRect(0, 0, BAR_WIDTH, bounds.size.height, 0)
 		Local barsize# = _BarSize()
-		Local barpos# = _BarPos()+VERTICAL_PAD
+		Local barpos# = _BarPos()+BAR_PAD
 		NVScrollbarDrawable.DrawRect(0, barpos, BAR_WIDTH, barsize, 1)
 		
 		Super.Draw()
-		
+	End Method
+	
+	Method _ScrollLength#()
+		Return Bounds(_temp_rect).size.height
 	End Method
 End Type
 
 Type NHScrollbar Extends NScrollbar
-	Global NHScrollbarDrawable:NDrawable
+	Global NHScrollbarDrawable:NDrawable = New NNinePatch.InitWithImageAndBorders(LoadAnimImage("res/hscroll.png", 256, 64, 0, 2), 46, 46, 0, 0, BAR_WIDTH/64)
 	
 	Method InitWithFrame:NHScrollbar(frame:NRect)
 		Super.InitWithFrame(frame)
 		Return Self
+	End Method
+	
+	Method SetFrame(frame:NRect)
+		_temp_rect.CopyValues(frame)
+		_temp_rect.size.height = BAR_WIDTH
+		Super.SetFrame(_temp_rect)
+	End Method
+	
+	Method MousePressed:NView(x%, y%)
+		Local sz# = _BarSize()
+		Local pos# = _BarPos()
+		
+		x :- BAR_PAD
+		
+		_temp_rect.Set(pos, 0, sz, BAR_WIDTH)
+		If Not _temp_rect.Contains(x, y) Then
+			_dragoff=0
+			_setValueForOffset(x)
+		Else
+			_dragoff = x-(pos+sz*.5)
+		EndIf
+		_dragging = true
+		
+		Return Self
+	End Method
+	
+	Method MouseMoved:NView(x%, y%, dx%, dy%)
+		If _dragging Then
+			_setValueForOffset(x-BAR_PAD)
+		EndIf
+	End Method
+	
+	Method MouseReleased:Int(x%, y%)
+		_setValueForOffset(x-BAR_PAD)
+		_dragging = False
+	End Method
+	
+	Method Draw()
+		Local bounds:NRect = Bounds(_temp_rect)
+		NHScrollbarDrawable.DrawRect(0, 0, bounds.size.width, BAR_WIDTH)
+		Local barsize# = _BarSize()
+		Local barpos# = _BarPos()+BAR_PAD
+		NHScrollbarDrawable.DrawRect(barpos, 0, barsize, BAR_WIDTH, 1)
+		
+		Super.Draw()
+	End Method
+	
+	Method _ScrollLength#()
+		Return Bounds(_temp_rect).size.width
 	End Method
 End Type
