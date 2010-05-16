@@ -108,13 +108,10 @@ Type NButton Extends NView
 		If _text Then
 			SetAlpha(0.8)
 			Local hx#, hy#
-			GetHandle(hx, hy)
-			SetHandle(Floor(_twidth*.5), Floor(_theight*.5))
 			Local sx#, sy#
 			GetScale(sx, sy)
 			SetScale(1.0, 1.0 - _down_fade*.1)
-			DrawText(_text, Floor(bounds.size.width*.5), Floor(bounds.size.height*.5 + (_down_fade)*2))
-			SetHandle(hx, hy)
+			DrawText(_text, Floor((bounds.size.width-_twidth)*.5), Floor((bounds.size.height-_theight)*.5 + (_down_fade)*2))
 			SetScale(sx, sy)
 		EndIf
 		SetAlpha(1.0)
