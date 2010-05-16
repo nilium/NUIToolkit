@@ -39,7 +39,7 @@ Type NGUI
 	Field _mouseWindow:NView=Null
 	Field _temp_rect:NRect = New NRect
 	
-	Field _mouse_btn%[3,2] ' button, 0=cur, 1=last
+	Field _mouse_btn%[16,2] ' button (16 because I'm paranoid and it's a nice number), 0=cur, 1=last
 	Field _mouse_prev:NPoint = New NPoint
 	Field _mouse_cur:NPoint = New NPoint
 	
