@@ -49,6 +49,7 @@ Type NSize Final
 	End Method
 	
 	Method CopyValues:NSize(other:NSize)
+		If other=Self Then Return Self
 		Assert other Else "'other' argument cannot be Null"
 		MemCopy(Self, other, 8)
 		Return Self
@@ -82,6 +83,7 @@ Type NPoint Final
 	End Method
 	
 	Method CopyValues:NPoint(other:NPoint)
+		If other=Self Then Return Self
 		Assert other Else "'other' argument cannot be Null"
 		MemCopy(Self, other, 8)
 		Return Self
