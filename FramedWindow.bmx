@@ -43,14 +43,15 @@ Type NFramedWindow Extends NWindow
 	Method DrawFrame()
 		Local frame:NRect = Frame(_temp_rect)
 		FramePatch.DrawRect(0, 0, frame.size.width, frame.size.height, Not IsMainWindow())
-		Local cx# = Floor((frame.size.width-_twidth)*.5)
-		Local cy# = Floor(12-_theight*.5)
 		SetColor(255,255,255)
 		SetAlpha(0.5)
-		DrawText _text, cx, cy+1
+		Local t$ = _fitTextToWidth(_text, frame.size.width-4)
+		Local cx# = Floor((frame.size.width-TextWidth(t))*.5)
+		Local cy# = Floor(12-TextHeight(t)*.5)
+		DrawText t, cx, cy+1
 		SetColor(0,0,0)
 		SetAlpha(1.0)
-		DrawText _text, cx, cy
+		DrawText t, cx, cy
 		SetColor(255,255,255)
 	End Method
 	
@@ -133,4 +134,25 @@ Type NFramedWindow Extends NWindow
 		EndIf
 		Super.SetText(text)
 	End Method
+	
+	Function _fitTextToWidth$(str$, width%)
+		Local spidx%=str.FindLast(" ")
+		Local trunc$=str
+		Rem
+		While width < TextWidth(trunc) And -1<spidx
+			If spidx = -1 Then
+				Exit
+			EndIf
+			trunc = str[..spidx]+"..."
+			spidx=str.FindLast(" ", spidx)
+		Wend
+		EndRem
+		If width < TextWidth(trunc) Then
+			Repeat
+				str = str[..str.Length-2]
+				trunc = str+"..."
+			Until str.Length=0 Or TextWidth(trunc)<width
+		EndIf
+		Return trunc
+	End Function
 End Type
