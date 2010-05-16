@@ -92,7 +92,6 @@ Type NGUI
 							Local frame:NRect = gui._mouseWindow.Frame(gui._temp_rect)
 							frame.origin.Set(0, 0)
 							If Not frame.ContainsPoint(point) Then
-								DebugStop
 								gui._overView.MouseLeft()
 								gui._overView = Null
 							EndIf
