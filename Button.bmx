@@ -46,11 +46,13 @@ Type NButton Extends NView
 		_drawable = NButtonDrawable
 	End Method
 	
-	Method MousePressed:NView(x%, y%)
-		_pressed = True
-		_inside = True
-		Animate(Self, "_down_fade", 1.0, 80)
-		Return Self
+	Method MousePressed:NView(button%, x%, y%)
+		If button = 1 Then
+			_pressed = True
+			_inside = True
+			Animate(Self, "_down_fade", 1.0, 80)
+			Return Self
+		EndIf
 	End Method
 	
 	Method MouseMoved:NView(x%, y%, dx%, dy%)
@@ -67,12 +69,14 @@ Type NButton Extends NView
 		Return Self
 	End Method
 	
-	Method MouseReleased:Int(x%, y%)
-		_pressed = 0
-		Animate(Self, "_down_fade", 0.0, 80)
-		If Bounds(_temp_rect).Contains(x,y) And Not _inside Then
-			_inside = True
-			_hilite_fade = 1.0
+	Method MouseReleased:Int(button%, x%, y%)
+		If button = 1 And _pressed Then
+			_pressed = 0
+			Animate(Self, "_down_fade", 0.0, 80)
+			If Bounds(_temp_rect).Contains(x,y) And Not _inside Then
+				_inside = True
+				_hilite_fade = 1.0
+			EndIf
 		EndIf
 	End Method
 	

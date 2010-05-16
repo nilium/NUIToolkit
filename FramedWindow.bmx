@@ -55,32 +55,37 @@ Type NFramedWindow Extends NWindow
 		SetColor(255,255,255)
 	End Method
 	
-	Method MousePressed:NView(x%, y%)
+	Method MousePressed:NView(button%, x%, y%)
 		' resizing the view takes precedence over other controls
-		Local frame:NRect = Frame(_temp_rect)
-		frame.Set(frame.size.width - 24, frame.size.height - 24, 24, 24)
-		If frame.Contains(x, y) Then
-			If Not IsMainWindow() Then
-				MakeMainWindow()
+		Local frame:NRect
+		If button = 1 Then
+			frame = Self.Frame(_temp_rect)
+			frame.Set(frame.size.width - 24, frame.size.height - 24, 24, 24)
+			If frame.Contains(x, y) Then
+				If Not IsMainWindow() Then
+					MakeMainWindow()
+				EndIf
+				_dragging = 2
+				Self.Frame(frame)
+				_drag_x = frame.size.width - x
+				_drag_y = frame.size.height - y
+				Return Self
 			EndIf
-			_dragging = 2
-			Self.Frame(frame)
-			_drag_x = frame.size.width - x
-			_drag_y = frame.size.height - y
-			Return Self
 		EndIf
 		
-		Local r:NView = Super.MousePressed(x, y)
+		Local r:NView = Super.MousePressed(button, x, y)
 		If r Then
 			Return r
 		EndIf
 		
-		Self.Frame(frame)
-		frame.origin.Set(0, 0)
-		frame.size.height = 24
-		If frame.Contains(x, y) Then
-			_dragging = 1
-			Return Self
+		If button = 1 Then
+			Self.Frame(frame)
+			frame.origin.Set(0, 0)
+			frame.size.height = 24
+			If frame.Contains(x, y) Then
+				_dragging = 1
+				Return Self
+			EndIf
 		EndIf
 		
 		Return Null
@@ -102,8 +107,10 @@ Type NFramedWindow Extends NWindow
 		Return Super.MouseMoved(x, y, dx, dy)
 	End Method
 	
-	Method MouseReleased(x%, y%)
-		_dragging = False
+	Method MouseReleased(button%, x%, y%)
+		If button = 1 Then
+			_dragging = False
+		EndIf
 	End Method
 	
 	Method MouseEntered()

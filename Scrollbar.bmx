@@ -121,22 +121,24 @@ Type NVScrollbar Extends NScrollbar
 		Super.SetFrame(_temp_rect)
 	End Method
 	
-	Method MousePressed:NView(x%, y%)
-		Local sz# = _BarSize()
-		Local pos# = _BarPos()
+	Method MousePressed:NView(button%, x%, y%)
+		If button = 1 Then
+			Local sz# = _BarSize()
+			Local pos# = _BarPos()
 		
-		y :- BAR_PAD
+			y :- BAR_PAD
 		
-		_temp_rect.Set(0, pos, BAR_WIDTH, sz)
-		If Not _temp_rect.Contains(x, y) Then
-			_dragoff=0
-			_setValueForOffset(y)
-		Else
-			_dragoff = y-(pos+sz*.5)
+			_temp_rect.Set(0, pos, BAR_WIDTH, sz)
+			If Not _temp_rect.Contains(x, y) Then
+				_dragoff=0
+				_setValueForOffset(y)
+			Else
+				_dragoff = y-(pos+sz*.5)
+			EndIf
+			_dragging = true
+		
+			Return Self
 		EndIf
-		_dragging = true
-		
-		Return Self
 	End Method
 	
 	Method MouseMoved:NView(x%, y%, dx%, dy%)
@@ -145,9 +147,11 @@ Type NVScrollbar Extends NScrollbar
 		EndIf
 	End Method
 	
-	Method MouseReleased:Int(x%, y%)
-		_setValueForOffset(y-BAR_PAD)
-		_dragging = False
+	Method MouseReleased:Int(button%, x%, y%)
+		If button = 1 And _dragging Then
+			_setValueForOffset(y-BAR_PAD)
+			_dragging = False
+		EndIf
 	End Method
 	
 	Method Draw()
@@ -179,22 +183,24 @@ Type NHScrollbar Extends NScrollbar
 		Super.SetFrame(_temp_rect)
 	End Method
 	
-	Method MousePressed:NView(x%, y%)
-		Local sz# = _BarSize()
-		Local pos# = _BarPos()
+	Method MousePressed:NView(button%, x%, y%)
+		If button = 1 Then
+			Local sz# = _BarSize()
+			Local pos# = _BarPos()
 		
-		x :- BAR_PAD
+			x :- BAR_PAD
 		
-		_temp_rect.Set(pos, 0, sz, BAR_WIDTH)
-		If Not _temp_rect.Contains(x, y) Then
-			_dragoff=0
-			_setValueForOffset(x)
-		Else
-			_dragoff = x-(pos+sz*.5)
+			_temp_rect.Set(pos, 0, sz, BAR_WIDTH)
+			If Not _temp_rect.Contains(x, y) Then
+				_dragoff=0
+				_setValueForOffset(x)
+			Else
+				_dragoff = x-(pos+sz*.5)
+			EndIf
+			_dragging = true
+		
+			Return Self
 		EndIf
-		_dragging = true
-		
-		Return Self
 	End Method
 	
 	Method MouseMoved:NView(x%, y%, dx%, dy%)
@@ -203,9 +209,11 @@ Type NHScrollbar Extends NScrollbar
 		EndIf
 	End Method
 	
-	Method MouseReleased:Int(x%, y%)
-		_setValueForOffset(x-BAR_PAD)
-		_dragging = False
+	Method MouseReleased:Int(button%, x%, y%)
+		If button = 1 And _dragging Then
+			_setValueForOffset(x-BAR_PAD)
+			_dragging = False
+		EndIf
 	End Method
 	
 	Method Draw()

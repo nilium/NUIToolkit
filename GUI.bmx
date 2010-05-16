@@ -62,7 +62,7 @@ Type NGUI
 							Local window:NWindow = NWindow(top.Value())
 							If Not window.Hidden() And window.Frame(gui._temp_rect).Contains(evt.x, evt.y) Then
 								Local frame:NRect = window.Frame(gui._temp_rect)
-								Local view:NView = window.MousePressed(evt.x - frame.origin.x, evt.y - frame.origin.y)
+								Local view:NView = window.MousePressed(evt.data, evt.x - frame.origin.x, evt.y - frame.origin.y)
 								If view Then
 									gui._mouseWindow = view
 									If gui._overView <> gui._mouseWindow Then
@@ -88,7 +88,7 @@ Type NGUI
 							If Not gui._mouse_cur.Equals(gui._mouse_prev) Then
 								gui._mouseWindow.MouseMoved(point.x, point.y, evt.x - gui._mouse_prev.x, evt.y - gui._mouse_prev.y)
 							EndIf
-							gui._mouseWindow.MouseReleased(point.x, point.y)
+							gui._mouseWindow.MouseReleased(evt.data, point.x, point.y)
 							Local frame:NRect = gui._mouseWindow.Frame(gui._temp_rect)
 							frame.origin.Set(0, 0)
 							If Not frame.ContainsPoint(point) Then
@@ -208,12 +208,12 @@ Type NWindow Extends NView
 		Return _gui
 	End Method
 	
-	Method MousePressed:NView(x%, y%)
+	Method MousePressed:NView(button%, x%, y%)
 		If Not IsMainWindow() Then
 			MakeMainWindow()
 		EndIf
 		
-		Return Super.MousePressed(x, y)
+		Return Super.MousePressed(button, x, y)
 	End Method
 	
 	Method InitWithFrame:NWindow(frame:NRect)
@@ -252,6 +252,7 @@ Type NWindow Extends NView
 	End Method
 	
 	Method SetContentView(view:NView)
+		Assert view Else "View cannot be Null"
 		_contentView.RemoveFromSuperview()
 		_contentView = view
 		Super.AddSubview(_contentView)
@@ -293,7 +294,7 @@ Type NView
 	' The mouse coordinates are converted to this view's coordinate system before it's passed
 	' Subclasses should call this first to determine whether or not a subview is more suitable for receipt of the event,
 	' then if the method returns null, handle the event themselves
-	Method MousePressed:NView(x%, y%)
+	Method MousePressed:NView(button%, x%, y%)
 		If Bounds(_temp_rect).Contains(x, y) Then
 			x :- _temp_rect.origin.x
 			y :- _temp_rect.origin.y
@@ -305,7 +306,7 @@ Type NView
 				
 				If subview.Frame(_temp_rect).Contains(x, y) Then
 					point.Set(x-_temp_rect.origin.x, y-_temp_rect.origin.y)
-					Local view:NView = subview.MousePressed(point.x, point.y)
+					Local view:NView = subview.MousePressed(button, point.x, point.y)
 					If view Then
 						Return view
 					EndIf
@@ -339,7 +340,7 @@ Type NView
 		Return Self
 	End Method
 	
-	Method MouseReleased%(x%, y%)
+	Method MouseReleased%(button%, x%, y%)
 		Return False
 	End Method
 	
@@ -443,7 +444,13 @@ Type NView
 	
 	Method SetBounds(bounds:NRect)
 		If _bounds <> bounds Then
-			_bounds.CopyValues(bounds)
+			If _bounds = Null Then
+				_bounds = bounds.Clone()
+			ElseIf bounds
+				_bounds.CopyValues(bounds)
+			Else
+				bounds = Null
+			EndIf
 		EndIf
 	End Method
 	
@@ -633,5 +640,3 @@ Type NView
 		Return _disabled
 	End Method
 End Type
-
-
