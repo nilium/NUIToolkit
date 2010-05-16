@@ -103,7 +103,7 @@ Type NScrollView Extends NView
 			_hbar.SetValue(contentFrame.size.width)
 		EndIf
 		
-		If contentFrame.size.width <= frame.size.width+barWidth Then
+		If contentFrame.size.width <= frame.size.width Then
 			frame.size.height :+ barHeight
 			contentFrame.origin.x = 0
 			_hbar.SetValue(0)
@@ -117,7 +117,7 @@ Type NScrollView Extends NView
 			_vbar.SetValue(contentFrame.size.width)
 		EndIf
 		
-		If contentFrame.size.height <= frame.size.height+barHeight Then
+		If contentFrame.size.height <= frame.size.height Then
 			frame.size.width :+ barWidth
 			contentFrame.origin.y = 0
 			_vbar.SetValue(0)
