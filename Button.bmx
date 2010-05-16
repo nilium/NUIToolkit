@@ -57,16 +57,11 @@ Type NButton Extends NView
 		Local inside:Int = Bounds(_temp_rect).Contains(x,y)
 		If inside <> _inside Then
 			If _pressed And inside Then
-'				Animate(Self, "_hilite_fade", 0.0, 10)
 				Animate(Self, "_down_fade", 1.0, 80)
-			ElseIf inside
-				Animate(Self, "_hilite_fade", 1.0, 200)
 			Else
 				Animate(Self, "_down_fade", 0.0, 80)
-				Animate(Self, "_hilite_fade", 0.0, 50)
 			EndIf
 		EndIf
-
 		_inside = inside
 		
 		Return Self
@@ -112,7 +107,15 @@ Type NButton Extends NView
 		EndIf
 		If _text Then
 			SetAlpha(0.8)
-			DrawText(_text, Floor((bounds.size.width - _twidth)*.5), Floor((bounds.size.height - _theight)*.5) + (_pressed And _inside)*1)
+			Local hx#, hy#
+			GetHandle(hx, hy)
+			SetHandle(Floor(_twidth*.5), Floor(_theight*.5))
+			Local sx#, sy#
+			GetScale(sx, sy)
+			SetScale(1.0, 1.0 - _down_fade*.1)
+			DrawText(_text, Floor(bounds.size.width*.5), Floor(bounds.size.height*.5 + (_down_fade)*2))
+			SetHandle(hx, hy)
+			SetScale(sx, sy)
 		EndIf
 		SetAlpha(1.0)
 		Super.Draw()
