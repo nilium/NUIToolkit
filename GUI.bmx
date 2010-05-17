@@ -275,6 +275,9 @@ Const NVIEW_ABOVE:Int = 1
 Const NVIEW_BELOW:Int = -1
 
 Type NView
+	Field _name$=""
+	Field _tag:Object=Null
+	Field _id%=0
 	Field _superview:NView
 	Field _subviews:TList = New TList
 	Field _frame:NRect = New NRect
@@ -285,9 +288,69 @@ Type NView
 	Field _disabled%=False
 	Field _hidden%=False
 	
+	Method SetID(id%)
+		_id = id
+	End Method
+	
+	Method ID:Int()
+		Return _id
+	End Method
+	
+	Method SetName(name$)
+		_name = name
+	End Method
+	
+	Method Name:String()
+		Return _name
+	End Method
+	
+	Method SetTag(tag:Object)
+		_tag = tag
+	End Method
+	
+	Method Tag:Object()
+		Return _tag
+	End Method
+	
 	Method InitWithFrame:NView(frame:NRect)
 		SetFrame(frame)
 		Return Self
+	End Method
+	
+	Method FindSubviewWithName:NView(name$, recurse%=True)
+		For Local subview:NView = EachIn _subviews
+			If subview._name = name Then
+				Return subview
+			EndIf
+		Next
+		If recurse Then
+			Local view:NView
+			For Local subview:NView = EachIn _subviews
+				view = subview.FindSubviewWithName(name, True)
+				If view Then
+					Return view
+				EndIf
+			Next
+		EndIf
+		Return Null
+	End Method
+	
+	Method FindSubviewWithID:NView(id%, recurse%=True)
+		For Local subview:NView = EachIn _subviews
+			If subview._id = id Then
+				Return subview
+			EndIf
+		Next
+		If recurse Then
+			Local view:NView
+			For Local subview:NView = EachIn _subviews
+				view = subview.FindSubviewWithID(id, True)
+				If view Then
+					Return view
+				EndIf
+			Next
+		EndIf
+		Return Null
 	End Method
 	
 	' Returns true if the event was handled, false if not (event will be passed to the next root view/window)
