@@ -22,7 +22,15 @@ things that Android would).
 
 ## Using NUIT
 
-Fairly simple: import ngui.bmx, like so: `Import "ngui.bmx"`
+First, clone this repository.  You've probably already done this,
+so then you should pull down the
+(NUIT.gfx)[http://github.com/nilium/NUIT.gfx] submodule:
+
+    $ git submodule init
+	$ git submodule update
+
+With that done, you can import ngui.bmx into your source code
+wherever you like, like so: `Import "ngui.bmx"`
 
 After that, you can use NGUI however you want.  This typically
 involves instantiating an instance of NGUI and then adding
