@@ -45,6 +45,10 @@ Type NScrollbar Extends NView
 		Return (_value-_min)/(_max-_min)
 	End Method
 	
+	Method SetPercentage(per!)
+		SetValue(_min+(per*(_max-_min)))
+	End Method
+	
 	Method SetValue(value!)
 		_value = Min(Max(_min, value), _max)
 	End Method
