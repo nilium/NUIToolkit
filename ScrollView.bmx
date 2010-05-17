@@ -75,9 +75,13 @@ End Type
 
 Public
 
+Const SCROLLVIEW_VISIBLE_ALWAYS%=1
+Const SCROLLVIEW_VISIBLE_AUTOHIDE%=0
+Const SCROLLVIEW_VISIBLE_HIDDEN%=-1
+
 Type NScrollView Extends NView
-	Field _hbar:NHScrollbar
-	Field _vbar:NVScrollbar
+	Field _hbar:NHScrollbar, _hbarvis%=SCROLLVIEW_VISIBLE_AUTOHIDE
+	Field _vbar:NVScrollbar, _vbarvis%=SCROLLVIEW_VISIBLE_AUTOHIDE
 	Field _clipView:NView
 	Field _contentView:NView
 	
@@ -113,8 +117,8 @@ Type NScrollView Extends NView
 		frame.size.height :- barHeight
 		frame.size.width :- barWidth
 		
-		_hbar.SetHidden(False)
-		_vbar.SetHidden(False)
+		_hbar.SetHidden(_hbarvis = SCROLLVIEW_VISIBLE_HIDDEN)
+		_vbar.SetHidden(_vbarvis = SCROLLVIEW_VISIBLE_HIDDEN)
 		
 		Local contentFrame:NRect = _contentview.Frame()
 		If contentFrame.origin.x + contentFrame.size.width < frame.size.width Then
@@ -122,7 +126,7 @@ Type NScrollView Extends NView
 			_hbar.SetValue(contentFrame.size.width)
 		EndIf
 
-		If contentFrame.size.width <= frame.size.width Then
+		If (contentFrame.size.width <= frame.size.width And _hbarvis <> SCROLLVIEW_VISIBLE_ALWAYS) Or _hbarvis = SCROLLVIEW_VISIBLE_HIDDEN Then
 			frame.size.height :+ barHeight
 			contentFrame.origin.x = 0
 			_hbar.SetValue(0)
@@ -133,22 +137,22 @@ Type NScrollView Extends NView
 			contentFrame.origin.y = Min(0, contentFrame.origin.y + (frame.size.height - (contentFrame.origin.y + contentFrame.size.height)))
 			_vbar.SetValue(contentFrame.size.width)
 		EndIf
-
-		If contentFrame.size.height <= frame.size.height Then
+		
+		If (contentFrame.size.height <= frame.size.height And _vbarvis <> SCROLLVIEW_VISIBLE_ALWAYS) Or _vbarvis = SCROLLVIEW_VISIBLE_HIDDEN Then
 			frame.size.width :+ barWidth
 			contentFrame.origin.y = 0
 			_vbar.SetValue(0)
 			_vbar.SetHidden(True)
 		EndIf
 		
-		If _hbar.Hidden() And Not _vbar.Hidden() And contentFrame.size.height <= frame.size.height Then
+		If _hbar.Hidden() And Not _vbar.Hidden() And contentFrame.size.height <= frame.size.height And _hbarvis <> SCROLLVIEW_VISIBLE_ALWAYS Then
 			frame.size.width :+ barWidth
 			contentFrame.origin.y = 0
 			_vbar.SetValue(0)
 			_vbar.SetHidden(True)
 		EndIf
 		
-		If _vbar.Hidden() And Not _hbar.Hidden() And contentFrame.size.width <= frame.size.width Then
+		If _vbar.Hidden() And Not _hbar.Hidden() And contentFrame.size.width <= frame.size.width And _vbarvis <> SCROLLVIEW_VISIBLE_ALWAYS Then
 			frame.size.height :+ barHeight
 			contentFrame.origin.x = 0
 			_hbar.SetValue(0)
@@ -183,6 +187,12 @@ Type NScrollView Extends NView
 		EndIf
 		
 		frame = _clipView.Frame(frame)
+	End Method
+	
+	Method SetScrollbarVisibility(horizontal%, vertical%)
+		_hbarvis = horizontal
+		_vbarvis = vertical
+		PerformLayout()
 	End Method
 	
 	Method AddSubview(view:NView, position:Int=NVIEW_ABOVE)
