@@ -24,12 +24,41 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 EndRem
 
-' Sort of catch-all import for use in projects
+SuperStrict
 
-Import "GUI.bmx"
-Import "FramedWindow.bmx"
-Import "Button.bmx"
-Import "Scrollbar.bmx"
-Import "ScrollView.bmx"
 Import "Checkbox.bmx"
-Import "Radiobox.bmx"
+
+Type NRadiobox Extends NCheckbox
+	Global NRadioboxDrawable:NDrawable = New NImageDrawable.InitWithImage(LoadAnimImage("res/radiobox.png", 16, 16, 0, 5))
+	
+	Field _groupid%=0
+	
+	Method InitWithFrame:NRadiobox(frame:NRect)
+		Super.InitWithFrame(frame)
+		SetDrawable(NRadioboxDrawable)
+		Return Self
+	End Method
+	
+	Method SetGroupID(id%)
+		_groupid = id
+	End Method
+	
+	Method GroupID%()
+		Return _groupid
+	End Method
+	
+	Method OnPress()
+		SetChecked(True)
+	End Method
+	
+	Method SetChecked(checked%)
+		Super.SetChecked(checked)
+		If Self.Checked() Then
+			For Local radio:NRadiobox = EachIn Superview().Subviews()
+				If radio <> Self And radio.GroupID() = _groupid Then
+					radio.SetChecked(False)
+				EndIf
+			Next
+		EndIf
+	End Method
+End Type
