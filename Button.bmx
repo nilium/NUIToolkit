@@ -44,6 +44,7 @@ Type NButton Extends NView
 	
 	Method New()
 		_drawable = NButtonDrawable
+		SetText("Button")
 	End Method
 	
 	Method MousePressed:NView(button%, x%, y%)
