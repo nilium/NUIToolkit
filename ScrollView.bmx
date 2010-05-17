@@ -31,6 +31,22 @@ Import "Scrollbar.bmx"
 
 Private
 
+Type _NClipView Extends NView
+	Method MousePressed:NView(button%, x%, y%)
+		If Not Bounds(_temp_rect).Contains(x, y) Then
+			Return Null
+		EndIf
+		Return Super.MousePressed(button, x, y)
+	End Method
+	
+	Method MouseMoved:NView(x%, y%, dx%, dy%)
+		If Not Bounds(_temp_rect).Contains(x, y) Then
+			Return Null
+		EndIf
+		Return Super.MouseMoved(x, y, dx, dy)
+	End Method
+End Type
+
 Type _NSVHScrollbar Extends NHScrollbar
 	Field _scrollview:NScrollView
 	Method OnScroll:Int(value!,prev!)
@@ -77,7 +93,7 @@ Type NScrollView Extends NView
 		_NSVHScrollbar(_hbar)._scrollview = Self
 		_NSVVScrollbar(_vbar)._scrollview = Self
 		
-		_clipView = New NView.InitWithFrame(frame)
+		_clipView = New _NClipView.InitWithFrame(frame)
 		_clipView.AddSubview(_contentView)
 		_AddSubview(_clipView)
 		_AddSubview(_hbar)
