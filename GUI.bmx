@@ -34,6 +34,8 @@ Const WINDOW_BELOWMAIN%=0
 Const WINDOW_BELOWALL%=-1
 
 Type NGUI
+	Field _active:Int=False
+	
 	Field _windows:TList = New TList
 	Field _mainWindow:NWindow=Null
 	Field _mouseWindow:NView=Null
@@ -48,99 +50,8 @@ Type NGUI
 	Function EventHook:Object(id%, data:Object, ctx:Object)
 		Local gui:NGUI = NGUI(ctx)
 		Local evt:TEvent = TEvent(data)
-		If gui Then
-			If id = EmitEventHook And evt Then
-				Select evt.id
-					Case EVENT_MOUSEDOWN
-						Local point:NPoint
-						Local top:TLink = gui._windows.LastLink()
-						gui._mouse_prev.CopyValues(gui._mouse_cur)
-						gui._mouse_cur.x = evt.x
-						gui._mouse_cur.y = evt.y
-						
-						While top
-							Local window:NWindow = NWindow(top.Value())
-							If Not window.Hidden() And window.Frame(gui._temp_rect).Contains(evt.x, evt.y) Then
-								Local frame:NRect = window.Frame(gui._temp_rect)
-								Local view:NView = window.MousePressed(evt.data, evt.x - frame.origin.x, evt.y - frame.origin.y)
-								If view Then
-									gui._mouseWindow = view
-									If gui._overView <> gui._mouseWindow Then
-										If gui._overView Then
-											gui._overView.MouseLeft()
-										EndIf
-										gui._overView = view
-										view.MouseEntered()
-									EndIf
-								EndIf
-								Exit
-							EndIf
-							top = top.PrevLink()
-						Wend
-					Case EVENT_MOUSEUP
-						gui._mouse_btn[evt.data, 1] = True
-						gui._mouse_btn[evt.data, 0] = False
-						gui._mouse_prev.CopyValues(gui._mouse_cur)
-						gui._mouse_cur.x = evt.x
-						gui._mouse_cur.y = evt.y
-						If gui._mouseWindow Then
-							Local point:NPoint = gui._mouseWindow.ConvertPointFromScreen(gui._mouse_cur)
-							If Not gui._mouse_cur.Equals(gui._mouse_prev) Then
-								gui._mouseWindow.MouseMoved(point.x, point.y, evt.x - gui._mouse_prev.x, evt.y - gui._mouse_prev.y)
-							EndIf
-							gui._mouseWindow.MouseReleased(evt.data, point.x, point.y)
-							Local frame:NRect = gui._mouseWindow.Frame(gui._temp_rect)
-							frame.origin.Set(0, 0)
-							If Not frame.ContainsPoint(point) Then
-								gui._overView.MouseLeft()
-								gui._overView = Null
-							EndIf
-							gui._mouseWindow = Null
-						EndIf
-					Case EVENT_MOUSEMOVE
-						gui._mouse_prev.CopyValues(gui._mouse_cur)
-						gui._mouse_cur.x = evt.x
-						gui._mouse_cur.y = evt.y
-						If gui._mouseWindow Then
-							Local point:NPoint = gui._mouseWindow.ConvertPointFromScreen(gui._mouse_cur)
-							gui._mouseWindow.MouseMoved(point.x, point.y, evt.x-gui._mouse_prev.x, evt.y-gui._mouse_prev.y)
-						Else
-							Local dx# = evt.x-gui._mouse_prev.x
-							Local dy# = evt.y-gui._mouse_prev.y
-							'Local top:TLink = gui._windows.LastLink()
-							Local set%=0
-							'While top
-							Local window:NWindow = gui._mainWindow
-							If window And Not window.Hidden() Then
-								If window.Frame(gui._temp_rect).Contains(evt.x, evt.y) Then
-									Local frame:NRect = window.Frame(gui._temp_rect)
-									Local view:NView = window.MouseMoved(evt.x - frame.origin.x, evt.y - frame.origin.y, dx, dy)
-									If view Then
-										set=True
-										If gui._overView <> view Then
-											If gui._overView Then
-												gui._overView.MouseLeft()
-											EndIf
-										EndIf
-										gui._overView = view
-										view.MouseEntered()
-'										Exit
-									EndIf
-								EndIf
-'								top = top.PrevLink()
-							EndIf
-							If gui._overView And Not set Then
-								gui._overView.MouseLeft()
-								gui._overView = Null
-							EndIf
-						EndIf
-				End Select
-			ElseIf id = FlipHook Then
-'				_mouse_btn[0, 1] = _mouse_btn[0, 0]
-'				_mouse_btn[1, 1] = _mouse_btn[1, 0]
-'				_mouse_btn[2, 1] = _mouse_btn[2, 0]
-'				_mouse_prev.CopyValues(_mouse_cur)
-			EndIf
+		If gui And id = EmitEventHook And evt Then
+			gui.PushEvent(evt)
 		EndIf
 		Return data
 	End Function
@@ -148,8 +59,104 @@ Type NGUI
 	Method New()
 		_mouse_cur.x = MouseX()
 		_mouse_cur.y = MouseY()
-		AddHook(EmitEventHook, EventHook, Self)
-		AddHook(FlipHook, EventHook, Self)
+	End Method
+	
+	Method EnableEventHook()
+		If _active = False Then
+			_active = True
+			AddHook(EmitEventHook, EventHook, Self)
+		EndIf
+	End Method
+	
+	Method DisableEventHook()
+		If _active Then
+			_active = False
+			RemoveHook(EmitEventHook, EventHook, Self)
+		EndIf
+	End Method
+	
+	Method PushEvent(evt:TEvent)
+		Select evt.id
+			Case EVENT_MOUSEDOWN
+				Local point:NPoint
+				Local top:TLink = _windows.LastLink()
+				_mouse_prev.CopyValues(_mouse_cur)
+				_mouse_cur.x = evt.x
+				_mouse_cur.y = evt.y
+				
+				While top
+					Local window:NWindow = NWindow(top.Value())
+					If Not window.Hidden() And window.Frame(_temp_rect).Contains(evt.x, evt.y) Then
+						Local frame:NRect = window.Frame(_temp_rect)
+						Local view:NView = window.MousePressed(evt.data, evt.x - frame.origin.x, evt.y - frame.origin.y)
+						If view Then
+							_mouseWindow = view
+							If _overView <> _mouseWindow Then
+								If _overView Then
+									_overView.MouseLeft()
+								EndIf
+								_overView = view
+								view.MouseEntered()
+							EndIf
+						EndIf
+						Exit
+					EndIf
+					top = top.PrevLink()
+				Wend
+			Case EVENT_MOUSEUP
+				_mouse_btn[evt.data, 1] = True
+				_mouse_btn[evt.data, 0] = False
+				_mouse_prev.CopyValues(_mouse_cur)
+				_mouse_cur.x = evt.x
+				_mouse_cur.y = evt.y
+				If _mouseWindow Then
+					Local point:NPoint = _mouseWindow.ConvertPointFromScreen(_mouse_cur)
+					If Not _mouse_cur.Equals(_mouse_prev) Then
+						_mouseWindow.MouseMoved(point.x, point.y, evt.x - _mouse_prev.x, evt.y - _mouse_prev.y)
+					EndIf
+					_mouseWindow.MouseReleased(evt.data, point.x, point.y)
+					Local frame:NRect = _mouseWindow.Frame(_temp_rect)
+					frame.origin.Set(0, 0)
+					If Not frame.ContainsPoint(point) Then
+						_overView.MouseLeft()
+						_overView = Null
+					EndIf
+					_mouseWindow = Null
+				EndIf
+			Case EVENT_MOUSEMOVE
+				_mouse_prev.CopyValues(_mouse_cur)
+				_mouse_cur.x = evt.x
+				_mouse_cur.y = evt.y
+				If _mouseWindow Then
+					Local point:NPoint = _mouseWindow.ConvertPointFromScreen(_mouse_cur)
+					_mouseWindow.MouseMoved(point.x, point.y, evt.x-_mouse_prev.x, evt.y-_mouse_prev.y)
+				Else
+					Local dx# = evt.x-_mouse_prev.x
+					Local dy# = evt.y-_mouse_prev.y
+					Local set%=0
+					Local window:NWindow = _mainWindow
+					If window And Not window.Hidden() Then
+						If window.Frame(_temp_rect).Contains(evt.x, evt.y) Then
+							Local frame:NRect = window.Frame(_temp_rect)
+							Local view:NView = window.MouseMoved(evt.x - frame.origin.x, evt.y - frame.origin.y, dx, dy)
+							If view Then
+								set=True
+								If _overView <> view Then
+									If _overView Then
+										_overView.MouseLeft()
+									EndIf
+								EndIf
+								_overView = view
+								view.MouseEntered()
+							EndIf
+						EndIf
+					EndIf
+					If _overView And Not set Then
+						_overView.MouseLeft()
+						_overView = Null
+					EndIf
+				EndIf
+		End Select
 	End Method
 	
 	Method Draw()
