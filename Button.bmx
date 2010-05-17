@@ -31,7 +31,7 @@ Import "NinePatch.bmx"
 Import "GUI.bmx"
 
 Type NButton Extends NView
-	Global NButtonDrawable:NDrawable = New NNinePatch.InitWithImageAndBorders(LoadAnimImage("res/button.png", 256, 128, 0, 4), 16, 16, 16, 22, 0.5)
+	Global NButtonDrawable:NDrawable = New NNinePatch.InitWithImageAndBorders(LoadAnimImage("res/button.png", 64, 64, 0, 4), 10, 10, 10, 10, 1)
 	
 	Field _drawable:NDrawable
 	Field _fade_hilite!=0.0

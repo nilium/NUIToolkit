@@ -30,7 +30,7 @@ Import "GUI.bmx"
 Import "NinePatch.bmx"
 
 Type NFramedWindow Extends NWindow
-	Global FramePatch:NDrawable = New NNinePatch.InitWithImageAndBorders(LoadAnimImage("res/window.png", 256, 256, 0, 2), 10, 10, 42, 10, .6)
+	Global FramePatch:NDrawable = New NNinePatch.InitWithImageAndBorders(LoadAnimImage("res/window.png", 256, 256, 0, 2), 10, 10, 26, 10, 1)
 	Field _dragging:Int = 0 ' 1 = move window, 2 = resize
 	Field _drag_x:Int, _drag_y:Int
 	Field _twidth#, _theight#
@@ -43,16 +43,10 @@ Type NFramedWindow Extends NWindow
 	Method DrawFrame()
 		Local frame:NRect = Frame(_temp_rect)
 		FramePatch.DrawRect(0, 0, frame.size.width, frame.size.height, Not IsMainWindow())
-		SetColor(255,255,255)
-		SetAlpha(0.5)
 		Local t$ = _fitTextToWidth(_text, frame.size.width-4)
 		Local cx# = Floor((frame.size.width-TextWidth(t))*.5)
 		Local cy# = Floor(12-TextHeight(t)*.5)
-		DrawText t, cx, cy+1
-		SetColor(0,0,0)
-		SetAlpha(1.0)
 		DrawText t, cx, cy
-		SetColor(255,255,255)
 	End Method
 	
 	Method MousePressed:NView(button%, x%, y%)

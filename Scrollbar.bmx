@@ -106,12 +106,12 @@ End Type
 Private
 
 Const BAR_WIDTH!=16
-Const BAR_PAD!=4
+Const BAR_PAD!=0
 
 Public
 
 Type NVScrollbar Extends NScrollbar
-	Global NVScrollbarDrawable:NDrawable = New NNinePatch.InitWithImageAndBorders(LoadAnimImage("res/vscroll.png", 64, 256, 0, 2), 0, 0, 46, 46, BAR_WIDTH/64)
+	Global NVScrollbarDrawable:NDrawable = New NNinePatch.InitWithImageAndBorders(LoadAnimImage("res/vscroll.png", 16, 64, 0, 2), 0, 0, 9, 9, 1)
 	
 	Method InitWithFrame:NVScrollbar(frame:NRect)
 		Super.InitWithFrame(frame)
@@ -171,7 +171,7 @@ Type NVScrollbar Extends NScrollbar
 End Type
 
 Type NHScrollbar Extends NScrollbar
-	Global NHScrollbarDrawable:NDrawable = New NNinePatch.InitWithImageAndBorders(LoadAnimImage("res/hscroll.png", 256, 64, 0, 2), 46, 46, 0, 0, BAR_WIDTH/64)
+	Global NHScrollbarDrawable:NDrawable = New NNinePatch.InitWithImageAndBorders(LoadAnimImage("res/hscroll.png", 64, 16, 0, 2), 9, 9, 0, 0, 1)
 	
 	Method InitWithFrame:NHScrollbar(frame:NRect)
 		Super.InitWithFrame(frame)
