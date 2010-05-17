@@ -97,33 +97,46 @@ Type NScrollView Extends NView
 		frame.size.height :- barHeight
 		frame.size.width :- barWidth
 		
+		_hbar.SetHidden(False)
+		_vbar.SetHidden(False)
+		
 		Local contentFrame:NRect = _contentview.Frame()
 		If contentFrame.origin.x + contentFrame.size.width < frame.size.width Then
 			contentFrame.origin.x = Min(0, contentFrame.origin.x + (frame.size.width - (contentFrame.origin.x + contentFrame.size.width)))
 			_hbar.SetValue(contentFrame.size.width)
 		EndIf
-		
+
 		If contentFrame.size.width <= frame.size.width Then
 			frame.size.height :+ barHeight
 			contentFrame.origin.x = 0
 			_hbar.SetValue(0)
 			_hbar.SetHidden(True)
-		Else
-			_hbar.SetHidden(False)
 		EndIf
 		
 		If contentFrame.origin.y + contentFrame.size.height < frame.size.height Then
 			contentFrame.origin.y = Min(0, contentFrame.origin.y + (frame.size.height - (contentFrame.origin.y + contentFrame.size.height)))
 			_vbar.SetValue(contentFrame.size.width)
 		EndIf
-		
+
 		If contentFrame.size.height <= frame.size.height Then
 			frame.size.width :+ barWidth
 			contentFrame.origin.y = 0
 			_vbar.SetValue(0)
 			_vbar.SetHidden(True)
-		Else
-			_vbar.SetHidden(False)
+		EndIf
+		
+		If _hbar.Hidden() And Not _vbar.Hidden() And contentFrame.size.height <= frame.size.height Then
+			frame.size.width :+ barWidth
+			contentFrame.origin.y = 0
+			_vbar.SetValue(0)
+			_vbar.SetHidden(True)
+		EndIf
+		
+		If _vbar.Hidden() And Not _hbar.Hidden() And contentFrame.size.width <= frame.size.width Then
+			frame.size.height :+ barHeight
+			contentFrame.origin.x = 0
+			_hbar.SetValue(0)
+			_hbar.SetHidden(True)
 		EndIf
 		
 		_contentView.SetFrame(contentFrame)
@@ -131,9 +144,11 @@ Type NScrollView Extends NView
 		
 		_vbar.SetMaximum(contentFrame.size.height)
 		_vbar.SetStep(frame.size.height)
+		_vbar.SetPercentage(-contentFrame.origin.y/(contentFrame.size.height-frame.size.height))
 		
 		_hbar.SetMaximum(contentFrame.size.width)
 		_hbar.SetStep(frame.size.width)
+		_hbar.SetPercentage(-contentFrame.origin.x/(contentFrame.size.width-frame.size.width))
 		
 		If Not _vbar.Hidden() Then
 			frame = Bounds(frame)
