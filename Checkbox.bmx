@@ -24,11 +24,66 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 EndRem
 
-' Sort of catch-all import for use in projects
+SuperStrict
 
-Import "GUI.bmx"
-Import "FramedWindow.bmx"
 Import "Button.bmx"
-Import "Scrollbar.bmx"
-Import "ScrollView.bmx"
-Import "Checkbox.bmx"
+Import "ImageDrawable.bmx"
+
+Type NCheckbox Extends NButton
+	Global NCheckboxDrawable:NDrawable = New NImageDrawable.InitWithImage(LoadAnimImage("res/checkbox.png", 16, 16, 0, 5))
+	
+	Field _checked:Int=False
+	
+	Method InitWithFrame:NCheckbox(frame:NRect)
+		Super.InitWithFrame(frame)
+		SetDrawable(NCheckboxDrawable)
+		Return Self
+	End Method
+	
+	Method Draw()
+		_drawable.DrawRect(0, 0, 16, 16, 0)
+		
+		If 0.02# < _down_fade Then
+			SetAlpha(_down_fade)
+			_drawable.DrawRect(0, 0, 16, 16, 1)
+			SetAlpha(1#)
+		EndIf
+		
+		If _hilite_fade*(1#-_down_fade) Then
+			SetBlend(LIGHTBLEND)
+			SetAlpha(_hilite_fade)
+			_drawable.DrawRect(0, 0, 16, 16, 2)
+			SetAlpha(1)
+			SetBlend(ALPHABLEND)
+		EndIf
+		
+		If _checked Then
+			_drawable.DrawRect(0, _down_fade, 16, 16, 3)
+		EndIf
+		
+		DrawText(_text, 19, 7-_theight*.5)
+	End Method
+	
+	Method OnPress()
+		SetChecked(Not _checked)
+	End Method
+	
+	Method SetText(text$)
+		Super.SetText(text)
+		SetFrame(Frame(_temp_rect))
+	End Method
+	
+	Method SetFrame(frame:NRect)
+		_temp_rect.CopyValues(frame)
+		_temp_rect.size.Set(19+_twidth, 16)
+		Super.SetFrame(_temp_rect)
+	End Method
+	
+	Method Setchecked(checked%)
+		_checked = 0<checked
+	End Method
+	
+	Method Checked%()
+		Return _checked
+	End Method
+End Type
