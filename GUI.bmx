@@ -33,6 +33,8 @@ Const WINDOW_RAISED%=1
 Const WINDOW_BELOWMAIN%=0
 Const WINDOW_BELOWALL%=-1
 
+Global ActiveGUI:NGUI = Null
+
 Type NGUI
 	Field _active:Int=False
 	
@@ -59,6 +61,12 @@ Type NGUI
 	Method New()
 		_mouse_cur.x = MouseX()
 		_mouse_cur.y = MouseY()
+		ActiveGUI = Self
+	End Method
+	
+	Method Dispose()
+		Assert ActiveGUI=Self
+		ActiveGUI = Null
 	End Method
 	
 	Method EnableEventHook()
@@ -75,6 +83,26 @@ Type NGUI
 		EndIf
 	End Method
 	
+	Method _PushMousePressedEventToWindow%(window:NView, evt:TEvent)
+		If Not window.Hidden() Then
+			Local point:NPoint = MakePoint(evt.x, evt.y)
+			window.ConvertPointFromScreen(point, point)
+			Local view:NView = window.MousePressed(evt.data, point.x, point.y)
+			If view Then
+				_mouseWindow = view
+				If _overView <> _mouseWindow Then
+					If _overView Then
+						_overView.MouseLeft()
+					EndIf
+					_overView = view
+					view.MouseEntered()
+				EndIf
+				Return True
+			EndIf
+		EndIf
+		Return False
+	End Method
+	
 	Method PushEvent(evt:TEvent)
 		Select evt.id
 			Case EVENT_MOUSEDOWN
@@ -84,21 +112,13 @@ Type NGUI
 				_mouse_cur.x = evt.x
 				_mouse_cur.y = evt.y
 				
+				If _mouseWindow And _mouseWindow.Superview() And _PushMousePressedEventToWindow(_mouseWindow, evt) Then
+					top = Null
+				EndIf
+				
 				While top
 					Local window:NWindow = NWindow(top.Value())
-					If Not window.Hidden() And window.Frame(_temp_rect).Contains(evt.x, evt.y) Then
-						Local frame:NRect = window.Frame(_temp_rect)
-						Local view:NView = window.MousePressed(evt.data, evt.x - frame.origin.x, evt.y - frame.origin.y)
-						If view Then
-							_mouseWindow = view
-							If _overView <> _mouseWindow Then
-								If _overView Then
-									_overView.MouseLeft()
-								EndIf
-								_overView = view
-								view.MouseEntered()
-							EndIf
-						EndIf
+					If _PushMousePressedEventToWindow(window, evt) Then
 						Exit
 					EndIf
 					top = top.PrevLink()
@@ -133,27 +153,20 @@ Type NGUI
 				Else
 					Local dx# = evt.x-_mouse_prev.x
 					Local dy# = evt.y-_mouse_prev.y
-					Local set%=0
+					Local set% = False
 					Local window:NWindow = _mainWindow
 					If window And Not window.Hidden() Then
-						If window.Frame(_temp_rect).Contains(evt.x, evt.y) Then
-							Local frame:NRect = window.Frame(_temp_rect)
-							Local view:NView = window.MouseMoved(evt.x - frame.origin.x, evt.y - frame.origin.y, dx, dy)
+						Local point:NPoint = window.ConvertPointFromScreen(_mouse_cur)
+						Local view:NView = window.MouseMoved(point.x, point.y, dx, dy)
+						If _overView <> view Then
+							If _overView Then
+								_overView.MouseLeft()
+							EndIf
+							_overView = view
 							If view Then
-								set=True
-								If _overView <> view Then
-									If _overView Then
-										_overView.MouseLeft()
-									EndIf
-								EndIf
-								_overView = view
 								view.MouseEntered()
 							EndIf
 						EndIf
-					EndIf
-					If _overView And Not set Then
-						_overView.MouseLeft()
-						_overView = Null
 					EndIf
 				EndIf
 		End Select
@@ -173,10 +186,11 @@ Type NGUI
 				Continue
 			EndIf
 			Local frame:NRect = window.Frame(_temp_rect)
-			SetOrigin(frame.origin.x, frame.origin.y)
+			SetOrigin(Floor(frame.origin.x), Floor(frame.origin.y))
 			SetViewport(0, 0, gw, gh)
 			window.Draw()
 			window.DrawSubviews()
+			window.DrawSubwindows()
 		Next
 		
 		SetOrigin(ox, oy)
@@ -185,8 +199,7 @@ Type NGUI
 	
 	Method AddWindow(window:NWindow, position:Int=WINDOW_BELOWMAIN)
 		Assert window Else "Window is Null"
-		Assert window._gui = Null Else "Window is already attached to a GUI instance"
-		window._gui = Self
+		Assert window._superview = Null Else "Subwindows cannot be attached to a GUI instance"
 		
 		If _mainWindow And position = WINDOW_BELOWMAIN Then
 			_windows.InsertBeforeLink(window, _windows.LastLink())
@@ -205,23 +218,41 @@ Type NGUI
 			_mainWindow = Null
 		EndIf
 	End Method
+	
+	Method SetMainWindow(window:NWindow)
+		If window = _mainWindow Then
+			Return
+		EndIf
+		If window.CanBecomeMainWindow() Then
+			If window.Superview() = Null Then
+				_windows.Remove(window)
+				_windows.AddLast(window)
+			EndIf
+			_mainWindow = window
+		EndIf
+	End Method
 End Type
 
 Type NWindow Extends NView
-	Field _gui:NGUI
 	Field _modal:Int = False
 	Field _contentView:NView
 	
-	Method GUI:NGUI()
-		Return _gui
-	End Method
-	
 	Method MousePressed:NView(button%, x%, y%)
-		If Not IsMainWindow() Then
-			MakeMainWindow()
+		Local frame:NRect = Self.Frame(_temp_rect)
+		frame.origin.Set(0,0)
+		
+		If frame.Contains(x, y) Then
+			If Not IsMainWindow() And CanBecomeMainWindow() Then
+				MakeMainWindow()
+			EndIf
 		EndIf
 		
-		Return Super.MousePressed(button, x, y)
+		Local view:NView = Super.MousePressed(button, x, y)
+		If view Then
+			Return view
+		Else
+			Return Self
+		EndIf
 	End Method
 	
 	Method InitWithFrame:NWindow(frame:NRect)
@@ -245,14 +276,20 @@ Type NWindow Extends NView
 	End Method
 	
 	Method IsMainWindow:Int() Final
-		Return (_gui And _gui._mainWindow = Self)
+		Return (ActiveGUI._mainWindow = Self)
+	End Method
+	
+	Method CanBecomeMainWindow:Int()
+		Return True
 	End Method
 	
 	Method MakeMainWindow:Int() Final
-		_gui._mainWindow = Self
-		_gui._windows.Remove(Self)
-		_gui._windows.AddLast(Self)
-		'TODO: Move into NGUI, ensure insertion below modal windows
+		ActiveGUI.SetMainWindow(Self)
+		Local sv:NView = Superview()
+		If sv Then
+			RemoveFromSuperview()
+			sv.AddSubview(Self, NVIEW_ABOVE)
+		EndIf
 	End Method
 	
 	Method ContentView:NView()
@@ -268,13 +305,28 @@ Type NWindow Extends NView
 	End Method
 	
 	Method AddSubview(view:NView, position:Int=NVIEW_ABOVE)
-		_contentView.AddSubview(view, position)
+		If NWindow(view) Then
+			Super.AddSubview(view)
+		Else
+			_contentView.AddSubview(view, position)
+		EndIf
 	End Method
 	
 	Method PerformLayout()
 		Local bounds:NRect = Bounds(_temp_rect)
 		bounds.origin.Set(0, 0)
 		_contentView.SetFrame(bounds)
+	End Method
+	
+	Method Modal:Int()
+		Return _modal
+	End Method
+	
+	Method SetModal(modal%)
+		_modal = modal
+		If _modal Then
+			MakeMainWindow()
+		EndIf
 	End Method
 End Type
 
@@ -366,49 +418,104 @@ Type NView
 	' Subclasses should call this first to determine whether or not a subview is more suitable for receipt of the event,
 	' then if the method returns null, handle the event themselves
 	Method MousePressed:NView(button%, x%, y%)
-		If Bounds(_temp_rect).Contains(x, y) Then
+		Bounds(_temp_rect)
+'		If _temp_rect.Contains(x, y) Then
 			x :- _temp_rect.origin.x
 			y :- _temp_rect.origin.y
 			Local point:NPoint = New NPoint
-			For Local subview:NView = EachIn _subviews
-				If subview.Hidden() Then
+			Local top:TLink = _subviews.LastLink()
+			Local subview:NView
+			While top
+				subview = NView(top.Value())
+				
+				If subview.Hidden() Or Not NWindow(subview) Then
+					top = top.PrevLink()
 					Continue
 				EndIf
 				
-				If subview.Frame(_temp_rect).Contains(x, y) Then
+				subview.Frame(_temp_rect)
+'				If _temp_rect.Contains(x, y) Then
 					point.Set(x-_temp_rect.origin.x, y-_temp_rect.origin.y)
 					Local view:NView = subview.MousePressed(button, point.x, point.y)
 					If view Then
 						Return view
 					EndIf
+'				EndIf
+				top = top.PrevLink()
+			Wend
+			
+			top = _subviews.LastLink()
+			While top
+				subview = NView(top.Value())
+				
+				If subview.Hidden() Or NWindow(subview) Then
+					top = top.PrevLink()
+					Continue
 				EndIf
-			Next
-		EndIf
+				
+				subview.Frame(_temp_rect)
+'				If _temp_rect.Contains(x, y) Then
+					point.Set(x-_temp_rect.origin.x, y-_temp_rect.origin.y)
+					Local view:NView = subview.MousePressed(button, point.x, point.y)
+					If view Then
+						Return view
+					EndIf
+'				EndIf
+				top = top.PrevLink()
+			Wend
+'		EndIf
 		
 		Return Null
 	End Method
 	
 	Method MouseMoved:NView(x%, y%, dx%, dy%)
-		If Bounds(_temp_rect).Contains(x, y) Then
-			x :- _temp_rect.origin.x
-			y :- _temp_rect.origin.y
-			Local point:NPoint = New NPoint
-			' TODO: reverse order of iteration to hit top-most first and bottom-most last
-			For Local subview:NView = EachIn _subviews
-				If subview.Hidden() Then
-					Continue
-				EndIf
-				
-				If subview.Frame(_temp_rect).Contains(x, y) Then
-					point.Set(x-_temp_rect.origin.x, y-_temp_rect.origin.y)
-					Local view:NView = subview.MouseMoved(point.x, point.y, dx, dy)
-					If view Then
-						Return view
-					EndIf
-				EndIf
-			Next
+		Bounds(_temp_rect)
+		x :- _temp_rect.origin.x
+		y :- _temp_rect.origin.y
+		Local point:NPoint = New NPoint
+		' TODO: reverse order of iteration to hit top-most first and bottom-most last
+		Local subview:NView
+		Local top:TLink = _subviews.LastLink()
+		While top
+			subview = NView(top.Value())
+			If subview.Hidden() Or Not NWindow(subview) Then
+				top = top.PrevLink()
+				Continue
+			EndIf
+			
+			subview.Frame(_temp_rect)
+			point.Set(x-_temp_rect.origin.x, y-_temp_rect.origin.y)
+			Local view:NView = subview.MouseMoved(point.x, point.y, dx, dy)
+			If view Then
+				Return view
+			EndIf
+			top = top.PrevLink()
+		Wend
+		
+		top = _subviews.LastLink()
+		While top
+			subview = NView(top.Value())
+			If subview.Hidden() Or NWindow(subview) Then
+				top = top.PrevLink()
+				Continue
+			EndIf
+			
+			subview.Frame(_temp_rect)
+			point.Set(x-_temp_rect.origin.x, y-_temp_rect.origin.y)
+			Local view:NView = subview.MouseMoved(point.x, point.y, dx, dy)
+			If view Then
+				Return view
+			EndIf
+			top = top.PrevLink()
+		Wend
+		
+		Local frame:NRect = Frame(_temp_rect)
+		frame.origin.Set(0, 0)
+		If frame.Contains(x, y) Then
+			Return Self
 		EndIf
-		Return Self
+		
+		Return Null
 	End Method
 	
 	Method MouseReleased%(button%, x%, y%)
@@ -425,6 +532,54 @@ Type NView
 	
 	' Draws the view.  Origin is set to the control's position on screen and the viewport is set to clip the view when drawing.
 	Method Draw()
+	End Method
+	
+	Method DrawSubwindows()
+		Local clip:NRect = New NRect
+		
+		Local tvx%, tvy%, tvw%, tvh%
+		GetViewport(tvx, tvy, tvw, tvh)
+		
+		Local ox#, oy#
+		GetOrigin(ox, oy)
+		Local vx%,vy%,vw%,vh%
+		GetViewport(vx,vy,vw,vh)
+		Local bx#,by#
+		Local bounds:NRect = Bounds(_temp_rect)
+		bx = ox+bounds.origin.x
+		by = oy+bounds.origin.y
+		
+		Local gx%, gy%
+		gx = GraphicsWidth()
+		gy = GraphicsHeight()
+		
+		Local clipsub:Int = ClipsSubviews()
+		
+		For Local subview:NView = EachIn _subviews
+			If subview.Hidden() Then
+				Continue
+			EndIf
+			
+			SetViewport(0, 0, gx, gy)
+			
+			If NWindow(subview) Then
+				Local frame:NRect = subview.Frame(_temp_rect)
+				frame.origin.Set(0, 0)
+				subview.ConvertPointToScreen(frame.origin, frame.origin)
+				SetOrigin(Floor(frame.origin.x), Floor(frame.origin.y))
+				
+				' draw view
+				subview.Draw()
+			
+				_ClipSubview(subview, vx, vy, vw, vh)
+				' draw subviews
+				subview.DrawSubviews()
+			EndIf
+			subview.DrawSubwindows()
+		Next
+		' undo clipping changes
+		SetOrigin(ox, oy)
+		SetViewport(tvx, tvy, tvw, tvh)
 	End Method
 	
 	Method DrawSubviews()
@@ -455,24 +610,11 @@ Type NView
 				Continue
 			EndIf
 			
-			' construct clipped viewport
-			subview.Bounds(_temp_rect)
-			subview.ConvertPointToScreen(_temp_rect.origin, _temp_rect.origin)
-			
-			' set the screen origin of the view
-			SetOrigin(_temp_rect.origin.x, _temp_rect.origin.y)
-			
-			' clip the subview's drawing if the superview clips subviews
-			If subview.ClipsSubviews() Then
-				subview.ClippingRect(clip)
-				subview.ConvertPointToScreen(clip.origin, clip.origin)
-				_temp_rect.Set(vx, vy, vw, vh)
-				clip.Intersection(_temp_rect, clip)
-				SetViewport(clip.origin.x, clip.origin.y, clip.size.width, clip.size.height)
-			Else
-				SetViewport(vx, vy, vw, vh)
+			If NWindow(subview) Then
+				Continue
 			EndIf
 			
+			_ClipSubview(subview, vx, vy, vw, vh)
 			' draw view
 			subview.Draw()
 			' draw subviews
@@ -481,6 +623,30 @@ Type NView
 		' undo clipping changes
 		SetOrigin(ox, oy)
 		SetViewport(tvx, tvy, tvw, tvh)
+	End Method
+	
+	Method _ClipSubview(subview:NView, vx%, vy%, vw%, vh%)
+		Local clip:NRect
+		' construct clipped viewport
+		subview.Frame(_temp_rect)
+		_temp_rect.origin.Set(0, 0)
+		subview.ConvertPointToScreen(_temp_rect.origin, _temp_rect.origin)
+		
+		' set the screen origin of the view
+		SetOrigin(Floor(_temp_rect.origin.x), Floor(_temp_rect.origin.y))
+		
+		' clip the subview's drawing if the superview clips subviews
+		If subview.ClipsSubviews() Then
+			clip = subview.ClippingRect(clip)
+			subview.ConvertPointToScreen(clip.origin, clip.origin)
+			clip.origin.x = Floor(clip.origin.x)
+			clip.origin.y = Floor(clip.origin.y)
+			_temp_rect.Set(vx, vy, vw, vh)
+			clip.Intersection(_temp_rect, clip)
+			SetViewport(clip.origin.x, clip.origin.y, clip.size.width, clip.size.height)
+		Else
+			SetViewport(vx, vy, vw, vh)
+		EndIf
 	End Method
 	
 	Method Frame:NRect(out:NRect=Null)
@@ -564,6 +730,17 @@ Type NView
 		Assert _superview Else "View does not have a superview"
 		_superview._subviews.Remove(Self)
 		_superview = Null
+	End Method
+	
+	Method Window:NWindow()
+		Local sv:NView = _superview
+		While sv
+			If NWindow(sv) Then
+				Return NWindow(sv)
+			EndIf
+			sv = sv._superview
+		Wend
+		Return Null
 	End Method
 	
 	Method Root:NView()
@@ -707,5 +884,9 @@ Type NView
 	
 	Method Disabled%()
 		Return _disabled
+	End Method
+	
+	Method Subviews:TList()
+		Return _subviews.Copy()
 	End Method
 End Type

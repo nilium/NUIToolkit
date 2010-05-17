@@ -56,7 +56,11 @@ Type NFramedWindow Extends NWindow
 	End Method
 	
 	Method MousePressed:NView(button%, x%, y%)
-		' resizing the view takes precedence over other controls
+		Local r:NView = Super.MousePressed(button, x, y)
+		If r <> Null And r <> Self Then
+			Return r
+		EndIf
+		
 		Local frame:NRect
 		If button = 1 Then
 			frame = Self.Frame(_temp_rect)
@@ -71,19 +75,18 @@ Type NFramedWindow Extends NWindow
 				_drag_y = frame.size.height - y
 				Return Self
 			EndIf
-		EndIf
-		
-		Local r:NView = Super.MousePressed(button, x, y)
-		If r Then
-			Return r
-		EndIf
-		
-		If button = 1 Then
+			
 			Self.Frame(frame)
 			frame.origin.Set(0, 0)
 			frame.size.height = 24
 			If frame.Contains(x, y) Then
 				_dragging = 1
+				Return Self
+			EndIf
+			
+			Self.Frame(frame)
+			frame.origin.Set(0, 0)
+			If frame.Contains(x, y) Then
 				Return Self
 			EndIf
 		EndIf

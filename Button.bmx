@@ -48,7 +48,7 @@ Type NButton Extends NView
 	End Method
 	
 	Method MousePressed:NView(button%, x%, y%)
-		If button = 1 Then
+		If button = 1 And Bounds(_temp_rect).Contains(x, y) Then
 			_pressed = True
 			_inside = True
 			Animate(Self, "_down_fade", 1.0, 80)
@@ -57,6 +57,11 @@ Type NButton Extends NView
 	End Method
 	
 	Method MouseMoved:NView(x%, y%, dx%, dy%)
+		Local view:NView = Super.MouseMoved(x, y, dx, dy)
+		If view <> Self And view <> Null Then
+			Return view
+		EndIf
+		
 		Local inside:Int = Bounds(_temp_rect).Contains(x,y)
 		If inside <> _inside Then
 			If _pressed And inside Then
@@ -67,7 +72,10 @@ Type NButton Extends NView
 		EndIf
 		_inside = inside
 		
-		Return Self
+		If inside Then
+			Return Self
+		EndIf
+		Return Null
 	End Method
 	
 	Method MouseReleased:Int(button%, x%, y%)

@@ -125,7 +125,7 @@ Type NVScrollbar Extends NScrollbar
 	End Method
 	
 	Method MousePressed:NView(button%, x%, y%)
-		If button = 1 Then
+		If button = 1 And Bounds(_temp_rect).Contains(x, y) Then
 			Local sz# = _BarSize()
 			Local pos# = _BarPos()
 		
@@ -185,7 +185,7 @@ Type NHScrollbar Extends NScrollbar
 	End Method
 	
 	Method MousePressed:NView(button%, x%, y%)
-		If button = 1 Then
+		If button = 1 And Bounds(_temp_rect).Contains(x, y) Then
 			Local sz# = _BarSize()
 			Local pos# = _BarPos()
 		
