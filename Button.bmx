@@ -143,6 +143,7 @@ Type NButton Extends NView
 	End Method
 	
 	Method SetDrawable(drawable:NDrawable)
+		Assert drawable
 		_drawable = drawable
 	End Method
 	
