@@ -38,7 +38,7 @@ Type _NSVHScrollbar Extends NHScrollbar
 		Local clipWidth# = _scrollview._clipView.Bounds(frame).size.width
 		Local contentWidth# = _scrollview._contentView.Frame(frame).size.width
 		
-		frame.origin.x = GetPercentage()*-(contentWidth-clipWidth)
+		frame.origin.x = Percentage()*-(contentWidth-clipWidth)
 		_scrollview._contentView.SetFrame(frame)
 '		_scrollview.PerformLayout()
 	End Method
@@ -51,7 +51,7 @@ Type _NSVVScrollbar Extends NVScrollbar
 		Local clipHeight# = _scrollview._clipView.Bounds(frame).size.height
 		Local contentHeight# = _scrollview._contentView.Frame(frame).size.height
 		
-		frame.origin.y = GetPercentage()*-(contentHeight-clipHeight)
+		frame.origin.y = Percentage()*-(contentHeight-clipHeight)
 		_scrollview._contentView.SetFrame(frame)
 '		_scrollview.PerformLayout()
 	End Method
@@ -143,11 +143,11 @@ Type NScrollView Extends NView
 		_clipView.SetFrame(frame)
 		
 		_vbar.SetMaximum(contentFrame.size.height)
-		_vbar.SetStep(frame.size.height)
+		_vbar.SetScrollStep(frame.size.height)
 		_vbar.SetPercentage(-contentFrame.origin.y/(contentFrame.size.height-frame.size.height))
 		
 		_hbar.SetMaximum(contentFrame.size.width)
-		_hbar.SetStep(frame.size.width)
+		_hbar.SetScrollStep(frame.size.width)
 		_hbar.SetPercentage(-contentFrame.origin.x/(contentFrame.size.width-frame.size.width))
 		
 		If Not _vbar.Hidden() Then

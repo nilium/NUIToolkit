@@ -619,7 +619,7 @@ Type NView
 		_text = text
 	End Method
 
-	Method GetText$()
+	Method Text$()
 		Return _text
 	End Method
 	

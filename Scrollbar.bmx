@@ -37,11 +37,11 @@ Type NScrollbar Extends NView
 	Field _dragging:Int=False
 	Field _dragoff%
 	
-	Method GetValue!()
+	Method Value!()
 		Return _value
 	End Method
 	
-	Method GetPercentage!()
+	Method Percentage!()
 		Return (_value-_min)/(_max-_min)
 	End Method
 	
@@ -53,36 +53,35 @@ Type NScrollbar Extends NView
 		_value = Min(Max(_min, value), _max)
 	End Method
 	
-	Method GetMinimum!()
+	Method Minimum!()
 		Return _min
 	End Method
 	
-	Method GetMaximum!()
+	Method Maximum!()
 		Return _max
 	End Method
 	
 	Method SetMinimum(nmin!)
 		_min = Min(nmin, _max)
 		SetValue(_value)
-		SetStep(_step)
+		SetScrollStep(_step)
 	End Method
 	
 	Method SetMaximum(nmax!)
 		_max = Max(nmax, _min)
 		SetValue(_value)
-		SetStep(_step)
+		SetScrollStep(_step)
 	End Method
 	
-	Method SetStep(nstep!)
+	Method SetScrollStep(nstep!)
 		_step = Min(Abs(nstep), _max-_min)
 	End Method
 	
-	Method GetStep!()
+	Method ScrollStep!()
 		Return _step
 	End Method
 	
 	Method OnScroll:Int(value!, prev!)
-		'TODO
 	End Method
 	
 	' Returns the complete length of the scrollbar (height in the case of vertical scrolling, width for horizontal)
@@ -96,7 +95,7 @@ Type NScrollbar Extends NView
 		Return ((_value-_min)/(_max-_min))*(_ScrollLength()-_BarSize()-BAR_PAD*2)
 	End Method
 	
-	Method _setValueForOffset(off!)
+	Method _SetValueForOffset(off!)
 		Local sz#=_BarSize()
 		Local prev! = _value
 		SetValue((((off-_dragoff)-Double(sz*.5))/(_ScrollLength()-sz-BAR_PAD*2))*(_max-_min)+_min)
@@ -135,7 +134,7 @@ Type NVScrollbar Extends NScrollbar
 			_temp_rect.Set(0, pos, BAR_WIDTH, sz)
 			If Not _temp_rect.Contains(x, y) Then
 				_dragoff=0
-				_setValueForOffset(y)
+				_SetValueForOffset(y)
 			Else
 				_dragoff = y-(pos+sz*.5)
 			EndIf
@@ -147,13 +146,13 @@ Type NVScrollbar Extends NScrollbar
 	
 	Method MouseMoved:NView(x%, y%, dx%, dy%)
 		If _dragging Then
-			_setValueForOffset(y-BAR_PAD)
+			_SetValueForOffset(y-BAR_PAD)
 		EndIf
 	End Method
 	
 	Method MouseReleased:Int(button%, x%, y%)
 		If button = 1 And _dragging Then
-			_setValueForOffset(y-BAR_PAD)
+			_SetValueForOffset(y-BAR_PAD)
 			_dragging = False
 		EndIf
 	End Method
@@ -195,7 +194,7 @@ Type NHScrollbar Extends NScrollbar
 			_temp_rect.Set(pos, 0, sz, BAR_WIDTH)
 			If Not _temp_rect.Contains(x, y) Then
 				_dragoff=0
-				_setValueForOffset(x)
+				_SetValueForOffset(x)
 			Else
 				_dragoff = x-(pos+sz*.5)
 			EndIf
@@ -207,13 +206,13 @@ Type NHScrollbar Extends NScrollbar
 	
 	Method MouseMoved:NView(x%, y%, dx%, dy%)
 		If _dragging Then
-			_setValueForOffset(x-BAR_PAD)
+			_SetValueForOffset(x-BAR_PAD)
 		EndIf
 	End Method
 	
 	Method MouseReleased:Int(button%, x%, y%)
 		If button = 1 And _dragging Then
-			_setValueForOffset(x-BAR_PAD)
+			_SetValueForOffset(x-BAR_PAD)
 			_dragging = False
 		EndIf
 	End Method
