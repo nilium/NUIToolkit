@@ -77,6 +77,9 @@ Type NButton Extends NView
 				_inside = True
 				_hilite_fade = 1.0
 			EndIf
+			If _inside Then
+				OnPress()
+			EndIf
 		EndIf
 	End Method
 	
@@ -132,5 +135,8 @@ Type NButton Extends NView
 	
 	Method SetDrawable(drawable:NDrawable)
 		_drawable = drawable
+	End Method
+	
+	Method OnPress()
 	End Method
 End Type
