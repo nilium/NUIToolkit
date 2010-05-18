@@ -32,8 +32,8 @@ so then you should pull down the
 With that done, you can import ngui.bmx into your source code
 wherever you like, like so: `Import "ngui.bmx"`
 
-After that, you can use NGUI however you want.  This typically
-involves instantiating an instance of NGUI and then adding
+After that, you can use NUIT however you want.  This typically
+involves instantiating an instance of NUIT and then adding
 windows to it and views to those windows.
 
 There is no documentation at present, since various design flaws
