@@ -430,11 +430,6 @@ Type NView
 		Return Null
 	End Method
 	
-	' Returns true if the event was handled, false if not (event will be passed to the next root view/window)
-	' If it returns true, that view will handle all future mouse events until the mouse is released
-	' The mouse coordinates are converted to this view's coordinate system before it's passed
-	' Subclasses should call this first to determine whether or not a subview is more suitable for receipt of the event,
-	' then if the method returns null, handle the event themselves
 	Method MousePressed:NView(button%, x%, y%)
 		Bounds(_temp_rect)
 '		If _temp_rect.Contains(x, y) Then
