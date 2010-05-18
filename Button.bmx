@@ -114,7 +114,7 @@ Type NButton Extends NView
 		SetColor(255, 255, 255)
 		Local hilite_fade! = _hilite_fade*(1.0-_down_fade)
 		SetAlpha(1.0)
-		_drawable.DrawRect(0, 0, bounds.size.width, bounds.size.height, 0)
+		_drawable.DrawRect(0, 0, bounds.size.width, bounds.size.height, 3*Disabled(True))
 		If hilite_fade > 0.02 And _down_fade < .98 Then
 			SetAlpha(hilite_fade)
 			_drawable.DrawRect(0, 0, bounds.size.width, bounds.size.height, 1)
