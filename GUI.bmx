@@ -84,7 +84,7 @@ Type NGUI
 	End Method
 	
 	Method _PushMousePressedEventToWindow%(window:NView, evt:TEvent)
-		If Not window.Hidden() Then
+		If Not window.Hidden() And Not window.Disabled(False) Then
 			Local point:NPoint = MakePoint(evt.x, evt.y)
 			window.ConvertPointFromScreen(point, point)
 			Local view:NView = window.MousePressed(evt.data, point.x, point.y)
@@ -129,7 +129,7 @@ Type NGUI
 				_mouse_prev.CopyValues(_mouse_cur)
 				_mouse_cur.x = evt.x
 				_mouse_cur.y = evt.y
-				If _mouseWindow Then
+				If _mouseWindow And Not _mouseWindow.Hidden() And Not _mouseWindow.Disabled(True) Then
 					Local point:NPoint = _mouseWindow.ConvertPointFromScreen(_mouse_cur)
 					If Not _mouse_cur.Equals(_mouse_prev) Then
 						_mouseWindow.MouseMoved(point.x, point.y, evt.x - _mouse_prev.x, evt.y - _mouse_prev.y)
@@ -147,15 +147,16 @@ Type NGUI
 				_mouse_prev.CopyValues(_mouse_cur)
 				_mouse_cur.x = evt.x
 				_mouse_cur.y = evt.y
-				If _mouseWindow Then
+				If _mouseWindow And Not _mouseWindow.Hidden() And Not _mouseWindow.Disabled(True) Then
 					Local point:NPoint = _mouseWindow.ConvertPointFromScreen(_mouse_cur)
 					_mouseWindow.MouseMoved(point.x, point.y, evt.x-_mouse_prev.x, evt.y-_mouse_prev.y)
 				Else
+					_mouseWindow = Null
 					Local dx# = evt.x-_mouse_prev.x
 					Local dy# = evt.y-_mouse_prev.y
 					Local set% = False
 					Local window:NWindow = _mainWindow
-					If window And Not window.Hidden() Then
+					If window And Not window.Hidden() And Not window.Disabled(True) Then
 						Local point:NPoint = window.ConvertPointFromScreen(_mouse_cur)
 						Local view:NView = window.MouseMoved(point.x, point.y, dx, dy)
 						If _overView <> view Then
@@ -455,7 +456,7 @@ Type NView
 			While top
 				subview = NView(top.Value())
 				
-				If subview.Hidden() Or Not NWindow(subview) Then
+				If subview.Hidden() Or subview.Disabled(False) Or Not NWindow(subview) Then
 					top = top.PrevLink()
 					Continue
 				EndIf
@@ -475,7 +476,7 @@ Type NView
 			While top
 				subview = NView(top.Value())
 				
-				If subview.Hidden() Or NWindow(subview) Then
+				If subview.Hidden() Or subview.Disabled(False) Or NWindow(subview) Then
 					top = top.PrevLink()
 					Continue
 				EndIf
@@ -505,7 +506,7 @@ Type NView
 		Local top:TLink = _subviews.LastLink()
 		While top
 			subview = NView(top.Value())
-			If subview.Hidden() Or Not NWindow(subview) Then
+			If subview.Hidden() Or subview.Disabled(False) Or Not NWindow(subview) Then
 				top = top.PrevLink()
 				Continue
 			EndIf
@@ -522,7 +523,7 @@ Type NView
 		top = _subviews.LastLink()
 		While top
 			subview = NView(top.Value())
-			If subview.Hidden() Or NWindow(subview) Then
+			If subview.Hidden() Or subview.Disabled(False) Or NWindow(subview) Then
 				top = top.PrevLink()
 				Continue
 			EndIf
@@ -909,8 +910,8 @@ Type NView
 		_disabled = disabled
 	End Method
 	
-	Method Disabled%()
-		Return _disabled
+	Method Disabled%(_recurse:Int=False)
+		Return _disabled Or (_recurse And (_superview And _superview.Disabled()))
 	End Method
 	
 	Method Subviews:TList()
