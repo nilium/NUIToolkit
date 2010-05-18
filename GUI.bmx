@@ -313,9 +313,11 @@ Type NWindow Extends NView
 	End Method
 	
 	Method PerformLayout()
-		Local bounds:NRect = Bounds(_temp_rect)
-		bounds.origin.Set(0, 0)
-		_contentView.SetFrame(bounds)
+		If _contentView Then
+			Local bounds:NRect = Bounds(_temp_rect)
+			bounds.origin.Set(0, 0)
+			_contentView.SetFrame(bounds)
+		EndIf
 	End Method
 	
 	Method Modal:Int()
