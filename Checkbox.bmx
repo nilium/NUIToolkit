@@ -41,7 +41,7 @@ Type NCheckbox Extends NButton
 	End Method
 	
 	Method Draw()
-		_drawable.DrawRect(0, 0, 16, 16, 0)
+		_drawable.DrawRect(0, 0, 16, 16, 4*Disabled(True))
 		
 		If 0.02# < _down_fade Then
 			SetAlpha(_down_fade)
