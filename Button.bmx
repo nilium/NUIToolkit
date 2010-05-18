@@ -30,6 +30,8 @@ Import "Animation.bmx"
 Import "NinePatch.bmx"
 Import "GUI.bmx"
 
+Const NButtonPressedEvent$="NButtonPressed"
+
 Type NButton Extends NView
 	Global NButtonDrawable:NDrawable = New NNinePatch.InitWithImageAndBorders(LoadAnimImage("res/button.png", 64, 64, 0, 4), 10, 10, 10, 10, 1)
 	
@@ -87,7 +89,7 @@ Type NButton Extends NView
 				_hilite_fade = 1.0
 			EndIf
 			If _inside Then
-				OnPress()
+				_Press()
 			EndIf
 		EndIf
 	End Method
@@ -145,6 +147,11 @@ Type NButton Extends NView
 	Method SetDrawable(drawable:NDrawable)
 		Assert drawable
 		_drawable = drawable
+	End Method
+	
+	Method _Press()
+		FireEvent(NButtonPressedEvent, Null)
+		OnPress()
 	End Method
 	
 	Method OnPress()

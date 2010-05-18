@@ -333,6 +333,23 @@ End Type
 Const NVIEW_ABOVE:Int = 1
 Const NVIEW_BELOW:Int = -1
 
+Type NEventHandler
+	Field _callback%(sender:NView, eventdata:TMap)
+	
+	Method InitWithCallback:NEventHandler(callback%(sender:NView, eventdata:TMap))
+		_callback = callback
+		Return Self
+	End Method
+	
+	Method Fire(sender:NView, eventdata:TMap)
+		If _callback Then _callback(sender, eventdata)
+	End Method
+End Type
+
+Function MakeEventHandler:NEventHandler(callback%(sender:NView, eventdata:TMap))
+	Return New NEventHandler.InitWithCallback(callback)
+End Function
+
 Type NView
 	Field _name$=""
 	Field _tag:Object=Null
@@ -346,6 +363,7 @@ Type NView
 	Field _text$=""
 	Field _disabled%=False
 	Field _hidden%=False
+	Field _eventhandlers:TMap=New TMap
 	
 	Method SetID(id%)
 		_id = id
@@ -888,5 +906,18 @@ Type NView
 	
 	Method Subviews:TList()
 		Return _subviews.Copy()
+	End Method
+	
+	Method SetEventHandler(eventname$, handler:NEventHandler)
+		_eventhandlers.Insert(eventname, handler)
+	End Method
+	
+	Method RemoveEventHandler(eventname$, handler:NEventHandler)
+		_eventhandlers.Remove(eventname)
+	End Method
+	
+	Method FireEvent(name$, eventdata:TMap)
+		Local handler:NEventHandler = NEventHandler(_eventhandlers.ValueForKey(name))
+		If handler Then handler.Fire(Self, eventdata)
 	End Method
 End Type
