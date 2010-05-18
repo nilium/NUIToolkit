@@ -321,6 +321,11 @@ Type NWindow Extends NView
 		EndIf
 	End Method
 	
+	Method SetFrame(frame:NRect)
+		Super.SetFrame(frame)
+		PerformLayout()
+	End Method
+	
 	Method Modal:Int()
 		Return _modal
 	End Method

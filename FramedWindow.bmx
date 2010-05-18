@@ -97,7 +97,6 @@ Type NFramedWindow Extends NWindow
 			Local frame:NRect = Frame(_temp_rect)
 			frame.size.Set(Max(50, x+_drag_x), Max(50, y+_drag_y))
 			SetFrame(frame)
-			PerformLayout()
 			Return Self
 		EndIf
 		
