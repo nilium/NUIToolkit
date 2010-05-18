@@ -394,40 +394,52 @@ Type NView
 		Return Self
 	End Method
 	
-	Method FindSubviewWithName:NView(name$, recurse%=True)
-		For Local subview:NView = EachIn _subviews
+	Method FindSubviewWithName:NView(name$, searchSubviews%=True)
+		Local bottom:TLink = _subviews.FirstLink()
+		Local view:NView = Null
+		If searchSubviews Then
+			While bottom And view = Null
+				Local subview:NView = NView(bottom.Value())
+				If subview._name = name Then
+					Return subview
+				EndIf
+				view = subview.FindSubviewWithName(name, True)
+				bottom = bottom.NextLink()
+			Wend
+		EndIf
+		While bottom
+			Local subview:NView = NView(bottom.Value())
 			If subview._name = name Then
 				Return subview
 			EndIf
-		Next
-		If recurse Then
-			Local view:NView
-			For Local subview:NView = EachIn _subviews
-				view = subview.FindSubviewWithName(name, True)
-				If view Then
-					Return view
-				EndIf
-			Next
-		EndIf
-		Return Null
+			bottom = bottom.NextLink()
+		Wend
+		
+		Return view
 	End Method
 	
-	Method FindSubviewWithID:NView(id%, recurse%=True)
-		For Local subview:NView = EachIn _subviews
+	Method FindSubviewWithID:NView(id%, searchSubviews%=True)
+		Local bottom:TLink = _subviews.FirstLink()
+		Local view:NView = Null
+		If searchSubviews Then
+			While bottom And view = Null
+				Local subview:NView = NView(bottom.Value())
+				If subview._id = id Then
+					Return subview
+				EndIf
+				view = subview.FindSubviewWithID(id, True)
+				bottom = bottom.NextLink()
+			Wend
+		EndIf
+		While bottom
+			Local subview:NView = NView(bottom.Value())
 			If subview._id = id Then
 				Return subview
 			EndIf
-		Next
-		If recurse Then
-			Local view:NView
-			For Local subview:NView = EachIn _subviews
-				view = subview.FindSubviewWithID(id, True)
-				If view Then
-					Return view
-				EndIf
-			Next
-		EndIf
-		Return Null
+			bottom = bottom.NextLink()
+		Wend
+		
+		Return view
 	End Method
 	
 	Method MousePressed:NView(button%, x%, y%)
