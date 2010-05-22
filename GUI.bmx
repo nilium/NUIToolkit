@@ -835,8 +835,13 @@ Type NView
 	
 	Method RemoveFromSuperview()
 		Assert _superview Else "View does not have a superview"
-		_superview._subviews.Remove(Self)
+		Local sv:NView = _superview
+		sv._subviews.Remove(Self)
 		_superview = Null
+		sv.SubviewWasRemoved(Self)
+	End Method
+	
+	Method SubviewWasRemoved(subview:NView)
 	End Method
 	
 	Method Window:NWindow()
