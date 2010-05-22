@@ -65,12 +65,25 @@ Type NGUI
 	Method New()
 		_mouse_cur.x = MouseX()
 		_mouse_cur.y = MouseY()
+		If ActiveGUI = Null Then
+			ActiveGUI = Self
+		EndIf
+	End Method
+	
+	Rem
+	bbdoc: Makes this the active instance #NGUI.  This <strong>must</strong> be done before you can work with controls for a given GUI instance.
+	EndRem
+	Method MakeActive()
 		ActiveGUI = Self
 	End Method
 	
+	Rem
+	bbdoc: Makes this #NGUI instance inactive.  It can be reactivated by calling #MakeActive.
+	EndRem
 	Method Dispose()
 		Assert ActiveGUI=Self
 		ActiveGUI = Null
+		DisableEventHook()
 	End Method
 	
 	Method EnableEventHook()
