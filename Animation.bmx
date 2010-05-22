@@ -34,29 +34,23 @@ Type Animation
 	Global AnimationTimer:TTimer = TTimer.Create(60, Null)
 	
 	Field o:Object		' Object being animated, used to keep pointer to object in scope during animation
-	Field f:TField
+	Field n:String ' value name
+	Field f:TField ' field for value
 	Field duration:Double
 	Field stime:Int
 	Field start:Double
 	Field finish:Double
-	Field fn:Double(s:Double,f:Double,t:Double)
+	Field fn:Double(context:Object, value$, newvalue!, progress!)
 	
-	Method Update(ctime%=-1)
-		If ctime=-1 Then ctime = Millisecs()
+	Method Update(ctime%)
 		Local time! = (ctime-stime)/duration
 		If time >= 1! Then
-			?Threaded
-			AnimationsLock.Lock
-			?
 			Animations.Remove(Self)
-			?Threaded
-			AnimationsLock.Unlock
-			?
 			If Not fn Then f.SetDouble(o, finish)
 		Else
 			Local nv!
 			If fn Then
-				nv = fn(start, finish, Min(time,1))
+				nv = fn(o, n, finish, Min(time,1))
 			Else
 				nv = start+((finish-start)*Min(time,1))
 			EndIf
@@ -100,7 +94,7 @@ Type Animation
 End Type
 Animation.EnableAutoUpdate()
 
-Function Animate(obj:Object, value$, newvalue!, duration!=5000, fn:Double(start:Double, finish:Double, time:Double)=Null)
+Function Animate(obj:Object, value$, newvalue!, duration!=5000, fn:Double(context:Object, value$, newvalue!, progress!)=Null)
 	Local a:Animation
 	
 	?Threaded
@@ -124,6 +118,7 @@ Function Animate(obj:Object, value$, newvalue!, duration!=5000, fn:Double(start:
 	
 	a = New Animation
 	a.o = obj
+	a.n = value
 	a.f = TTypeID.ForObject(obj).FindField(value)
 	a.duration = duration
 	a.stime = Millisecs()
