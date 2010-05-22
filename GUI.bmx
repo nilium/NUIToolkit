@@ -37,6 +37,9 @@ Const WINDOW_BELOWALL%=-1
 
 Global ActiveGUI:NGUI = Null
 
+Rem
+bbdoc: Main NUIT class, handles event propagation and rendering of windows.
+EndRem
 Type NGUI
 	Field _active:Int=False
 	
