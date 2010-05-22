@@ -509,7 +509,7 @@ Type NView
 	Field _subviews:TList = New TList
 	Field _frame:NRect = New NRect
 	Field _bounds:NRect = Null
-	Field _min_size:NRect = New NRect ' TODO: make use of this
+	Field _min_size:NSize = New NSize
 	Field _temp_rect:NRect = New NRect
 	Field _text$=""
 	Field _disabled%=False
@@ -788,8 +788,13 @@ Type NView
 	End Method
 	
 	Method SetFrame(frame:NRect)
+		Local copy:NRect = Self.Frame()
+		frame.size.Maximum(_min_size, frame.size)
 		If _frame <> frame Then
 			_frame.CopyValues(frame)
+		EndIf
+		If Not copy.Equals(_frame) Then
+			FireEvent(NFrameChangedEvent)
 		EndIf
 	End Method
 	
@@ -834,12 +839,19 @@ Type NView
 	End Method
 	
 	' Returns the minimum possible size of the view
-	Method MinimumSize:NRect(out:NRect=Null)
+	Method MinimumSize:NSize(out:NSize=Null)
 		If Not out Then
-			out = New NRect
+			out = New NSize
 		EndIf
 		out.CopyValues(_min_size)
 		Return out
+	End Method
+	
+	Method SetMinimumSize:NSize(size:NSize)
+		If _min_size <> size Then
+			_min_size.CopyValues(size)
+			SetFrame(Frame(_temp_rect))
+		EndIf
 	End Method
 	
 	Method Superview:NView()
