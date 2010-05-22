@@ -609,7 +609,13 @@ Type NView
 	End Method
 	
 	Method MouseReleased%(button%, x%, y%)
-		Return False
+		If _superview Then
+			Local origin:NPoint = New NPoint
+			origin.Set(x, y)
+			origin.Add(_superview.Bounds(_temp_rect).origin, origin)
+			origin.Add(_frame.origin, origin)
+			_superview.MouseReleased(button, origin.x, origin.y)
+		EndIf
 	End Method
 	
 	Method MouseEntered%()
