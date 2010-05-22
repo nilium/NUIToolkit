@@ -33,7 +33,7 @@ Import "GUI.bmx"
 Const NButtonPressedEvent$="NButtonPressed"
 
 Type NButton Extends NView
-	Global NButtonDrawable:NDrawable = New NNinePatch.InitWithImageAndBorders(LoadAnimImage("res/button.png", 64, 64, 0, 4), 10, 10, 10, 10, 1)
+	Global NButtonDrawable:NDrawable = New NNinePatchDrawable.InitWithImageAndBorders(LoadAnimImage("res/button.png", 64, 64, 0, 4), 10, 10, 10, 10, 1)
 	
 	Field _drawable:NDrawable
 	Field _fade_hilite!=0.0
@@ -49,21 +49,17 @@ Type NButton Extends NView
 		SetText("Button")
 	End Method
 	
-	Method MousePressed:NView(button%, x%, y%)
+	Method MousePressed(button%, x%, y%)
 		If button = 1 And Bounds(_temp_rect).Contains(x, y) Then
 			_pressed = True
 			_inside = True
 			Animate(Self, "_down_fade", 1.0, 80)
-			Return Self
+			Return
 		EndIf
+		Super.MousePressed(button, x, y)
 	End Method
 	
-	Method MouseMoved:NView(x%, y%, dx%, dy%)
-		Local view:NView = Super.MouseMoved(x, y, dx, dy)
-		If view <> Self And view <> Null Then
-			Return view
-		EndIf
-		
+	Method MouseMoved(x%, y%, dx%, dy%)
 		Local inside:Int = Bounds(_temp_rect).Contains(x,y)
 		If inside <> _inside Then
 			If _pressed And inside Then
@@ -73,11 +69,6 @@ Type NButton Extends NView
 			EndIf
 		EndIf
 		_inside = inside
-		
-		If inside Then
-			Return Self
-		EndIf
-		Return Null
 	End Method
 	
 	Method MouseReleased:Int(button%, x%, y%)
@@ -86,7 +77,6 @@ Type NButton Extends NView
 			Animate(Self, "_down_fade", 0.0, 80)
 			If Bounds(_temp_rect).Contains(x,y) And Not _inside Then
 				_inside = True
-				_hilite_fade = 1.0
 			EndIf
 			If _inside Then
 				_Press()
@@ -95,12 +85,12 @@ Type NButton Extends NView
 	End Method
 	
 	Method MouseEntered:Int()
-		Animate(Self, "_hilite_fade", 1.0, 200)
+		Animate(Self, "_hilite_fade", 1.0, 80)
 		_inside = True
 	End Method
 	
 	Method MouseLeft:Int()
-		Animate(Self, "_hilite_fade", 0.0, 200)
+		Animate(Self, "_hilite_fade", 0.0, 80)
 		_inside = False
 	End Method
 	
@@ -123,17 +113,26 @@ Type NButton Extends NView
 			SetAlpha(_down_fade)
 			_drawable.DrawRect(0, 0, bounds.size.width, bounds.size.height, 2)
 		EndIf
-		If _text Then
-			SetAlpha(0.8)
-			Local hx#, hy#
-			Local sx#, sy#
-			GetScale(sx, sy)
-			SetScale(1.0, 1.0 - _down_fade*.1)
-			DrawText(_text, Floor((bounds.size.width-_twidth)*.5), Floor((bounds.size.height-_theight)*.5 + (_down_fade)*2))
-			SetScale(sx, sy)
-		EndIf
 		SetAlpha(1.0)
+		DrawCaption()
 		Super.Draw()
+	End Method
+	
+	Method DrawCaption()
+		If _text Then
+			Local bounds:NRect= Bounds(_temp_rect)
+			SetAlpha(0.8)
+			If _text Then
+				Local text$ = FitTextToWidth(_text, bounds.size.width-4)
+				If text Then
+					Local sx#, sy#
+					GetScale(sx, sy)
+					SetScale(1.0, 1.0 - _down_fade*.1)
+					DrawText(text, Floor((bounds.size.width-TextWidth(text))*.5), Floor((bounds.size.height-TextHeight(text))*.5 + (_down_fade)*2))
+					SetScale(sx, sy)
+				EndIf
+			EndIf
+		EndIf
 	End Method
 	
 	Method SetText(text$)

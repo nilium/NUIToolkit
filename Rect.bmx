@@ -34,6 +34,34 @@ Type NSize Final
 	Field width#=0
 	Field height#=0
 	
+	Method Minimum:NSize(other:NSize, out:NSize=Null)
+		If out = Null Then out = New NSize
+		out.width = Min(width, other.width)
+		out.height = Min(height, other.height)
+		Return out
+	End Method
+	
+	Method Maximum:NSize(other:NSize, out:NSize=Null)
+		If out = Null Then out = New NSize
+		out.width = Max(width, other.width)
+		out.height = Max(height, other.height)
+		Return out
+	End Method
+	
+	Method Add:NSize(other:NSize, out:NSize=Null)
+		If out = Null Then out = New NSize
+		out.width = width + other.width
+		out.height = height + other.height
+		Return out
+	End Method
+	
+	Method Subtract:NSize(other:NSize, out:NSize=Null)
+		If out = Null Then out = New NSize
+		out.width = width - other.width
+		out.height = height - other.height
+		Return out
+	End Method
+	
 	Method Set(width#, height#)
 		Self.width = width
 		Self.height = height
@@ -67,6 +95,34 @@ End Type
 Type NPoint Final
 	Field x#=0
 	Field y#=0
+	
+	Method Minimum:NPoint(other:NPoint, out:NPoint=Null)
+		If out = Null Then out = New NPoint
+		out.x = Min(x, other.x)
+		out.y = Min(y, other.y)
+		Return out
+	End Method
+	
+	Method Maximum:NPoint(other:NPoint, out:NPoint=Null)
+		If out = Null Then out = New NPoint
+		out.x = Max(x, other.x)
+		out.y = Max(y, other.y)
+		Return out
+	End Method
+	
+	Method Add:NPoint(other:NPoint, out:NPoint=Null)
+		If out = Null Then out = New NPoint
+		out.x = x + other.x
+		out.y = y + other.y
+		Return out
+	End Method
+	
+	Method Subtract:NPoint(other:NPoint, out:NPoint=Null)
+		If out = Null Then out = New NPoint
+		out.x = x - other.x
+		out.y = y - other.y
+		Return out
+	End Method
 	
 	Method Set(x#, y#)
 		Self.x = x

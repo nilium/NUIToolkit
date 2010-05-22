@@ -32,18 +32,20 @@ Import "Scrollbar.bmx"
 Private
 
 Type _NClipView Extends NView
-	Method MousePressed:NView(button%, x%, y%)
-		If Not Bounds(_temp_rect).Contains(x, y) Then
-			Return Null
+	Method ViewForPoint:NView(point:NPoint)
+		Local view:NView = Super.ViewForPoint(point)
+		If view <> Self And view <> Null And Not NWindow(view) Then
+			Frame(_temp_rect)
+			_temp_rect.origin.Set(0,0)
+			If Not _temp_rect.ContainsPoint(point) Then
+				view = Null
+			EndIf
 		EndIf
-		Return Super.MousePressed(button, x, y)
+		Return view
 	End Method
 	
-	Method MouseMoved:NView(x%, y%, dx%, dy%)
-		If Not Bounds(_temp_rect).Contains(x, y) Then
-			Return Null
-		EndIf
-		Return Super.MouseMoved(x, y, dx, dy)
+	Method ClipsSubviews%()
+		Return True
 	End Method
 End Type
 

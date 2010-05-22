@@ -61,7 +61,16 @@ Type NCheckbox Extends NButton
 			_drawable.DrawRect(0, _down_fade, 16, 16, 3)
 		EndIf
 		
-		DrawText(_text, 19, 7-_theight*.5)
+		DrawCaption()
+	End Method
+	
+	Method DrawCaption()
+		If _text Then
+			Local text$ = FitTextToWidth(_text, Bounds(_temp_rect).size.width-20)
+			If text Then
+				DrawText(text, 19, 7-TextHeight(text)*.5)
+			EndIf
+		EndIf
 	End Method
 	
 	Method OnPress()
@@ -75,11 +84,12 @@ Type NCheckbox Extends NButton
 	
 	Method SetFrame(frame:NRect)
 		_temp_rect.CopyValues(frame)
-		_temp_rect.size.Set(19+_twidth, 16)
+		_temp_rect.size.width = Max(16, _temp_rect.size.width)
+		_temp_rect.size.height = 16
 		Super.SetFrame(_temp_rect)
 	End Method
 	
-	Method Setchecked(checked%)
+	Method SetChecked(checked%)
 		_checked = 0<checked
 	End Method
 	

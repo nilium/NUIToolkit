@@ -27,6 +27,8 @@ EndRem
 SuperStrict
 
 Import "Rect.bmx"
+Import "GraphicsContext.bmx"
+Import "Max2DGraphicsState.bmx"
 
 Const WINDOW_RAISEDMAIN%=2
 Const WINDOW_RAISED%=1
@@ -41,6 +43,7 @@ Type NGUI
 	Field _windows:TList = New TList
 	Field _mainWindow:NWindow=Null
 	Field _mouseWindow:NView=Null
+	Field _focalView:NView=Null
 	Field _temp_rect:NRect = New NRect
 	
 	Field _mouse_btn%[16,2] ' button (16 because I'm paranoid and it's a nice number), 0=cur, 1=last
@@ -48,6 +51,7 @@ Type NGUI
 	Field _mouse_cur:NPoint = New NPoint
 	
 	Field _overView:NView
+	Field _popup:NPopup
 	
 	Function EventHook:Object(id%, data:Object, ctx:Object)
 		Local gui:NGUI = NGUI(ctx)
@@ -83,46 +87,55 @@ Type NGUI
 		EndIf
 	End Method
 	
-	Method _PushMousePressedEventToWindow%(window:NView, evt:TEvent)
-		If Not window.Hidden() And Not window.Disabled(False) Then
-			Local point:NPoint = MakePoint(evt.x, evt.y)
-			window.ConvertPointFromScreen(point, point)
-			Local view:NView = window.MousePressed(evt.data, point.x, point.y)
-			If view Then
-				_mouseWindow = view
-				If _overView <> _mouseWindow Then
-					If _overView Then
-						_overView.MouseLeft()
-					EndIf
-					_overView = view
-					view.MouseEntered()
-				EndIf
-				Return True
-			EndIf
-		EndIf
-		Return False
-	End Method
-	
 	Method PushEvent(evt:TEvent)
 		Select evt.id
 			Case EVENT_MOUSEDOWN
-				Local point:NPoint
+				Local point:NPoint = Null
+				Local view:NView = Null
 				Local top:TLink = _windows.LastLink()
 				_mouse_prev.CopyValues(_mouse_cur)
 				_mouse_cur.x = evt.x
 				_mouse_cur.y = evt.y
 				
-				If _mouseWindow And _mouseWindow.Superview() And _PushMousePressedEventToWindow(_mouseWindow, evt) Then
-					top = Null
+				If _popup Then
+					point = _popup.ConvertPointFromScreen(_mouse_cur, point)
+					view = _popup.ViewForPoint(point)
+					If view = Null Then
+						_popup.Hide()
+						_popup = Null
+					EndIf
 				EndIf
 				
-				While top
+				While top And Not view
 					Local window:NWindow = NWindow(top.Value())
-					If _PushMousePressedEventToWindow(window, evt) Then
-						Exit
-					EndIf
+					point = window.ConvertPointFromScreen(_mouse_cur, point)
+					view = window.ViewForPoint(point)
 					top = top.PrevLink()
 				Wend
+				
+				_mouseWindow = view
+				
+				If _overView <> view Then
+					If _overView Then _overView.MouseLeft()
+					_overView = view
+					If _overView Then _overView.MouseEntered()
+				EndIf
+				
+				If view <> _focalView Then
+					If _focalView Then _focalView.FocusLost()
+					_focalView = view
+					If view Then view.FocusGained()
+				EndIf
+				
+				If view Then
+					_mouseWindow = view
+					point = view.ConvertPointFromScreen(_mouse_cur, point)
+					view.MousePressed(evt.data, point.x, point.y)
+					Local window:NWindow = NWindow(view.Root())
+					If window Then
+						SetMainWindow(window)
+					EndIf
+				EndIf
 			Case EVENT_MOUSEUP
 				_mouse_btn[evt.data, 1] = True
 				_mouse_btn[evt.data, 0] = False
@@ -155,47 +168,80 @@ Type NGUI
 					Local dx# = evt.x-_mouse_prev.x
 					Local dy# = evt.y-_mouse_prev.y
 					Local set% = False
+					Local point:NPoint
+					
+					Local view:NView
+					If _popup Then
+						point = _popup.ConvertPointFromScreen(_mouse_cur, point)
+						view = _popup.ViewForPoint(point)
+					EndIf
+					
 					Local window:NWindow = _mainWindow
-					If window And Not window.Hidden() And Not window.Disabled(True) Then
-						Local point:NPoint = window.ConvertPointFromScreen(_mouse_cur)
-						Local view:NView = window.MouseMoved(point.x, point.y, dx, dy)
-						If _overView <> view Then
-							If _overView Then
-								_overView.MouseLeft()
-							EndIf
-							_overView = view
-							If view Then
-								view.MouseEntered()
-							EndIf
+					If Not view And window And Not window.Hidden() And Not window.Disabled(True) Then
+						point = window.ConvertPointFromScreen(_mouse_cur, point)
+						view = window.ViewForPoint(point)
+					EndIf
+					
+					If _overView <> view Then
+						If _overView Then
+							_overView.MouseLeft()
 						EndIf
+						_overView = view
+						If view Then
+							view.MouseEntered()
+						EndIf
+					EndIf
+					
+					If view Then
+						view.MouseMoved(point.x, point.y, dx, dy)
 					EndIf
 				EndIf
 		End Select
 	End Method
 	
 	Method Draw()
-		Local vx%, vy%, vw%, vh%
-		GetViewport(vx, vy, vw, vh)
-		Local ox#, oy#
-		GetOrigin(ox, oy)
-		
 		Local gw% = GraphicsWidth()
 		Local gh% = GraphicsHeight()
+		
+		Local ctx:NGraphicsContext = New NGraphicsContext.InitWithGraphicsStateType(NMax2DGraphicsStateTypeID)
+		ctx.SaveState()
 		
 		For Local window:NWindow = EachIn _windows
 			If window.Hidden() Then
 				Continue
 			EndIf
 			Local frame:NRect = window.Frame(_temp_rect)
-			SetOrigin(Floor(frame.origin.x), Floor(frame.origin.y))
-			SetViewport(0, 0, gw, gh)
+			ctx.MoveToPoint(Floor(frame.origin.x), Floor(frame.origin.y))
+			ctx.SetClipping(0, 0, gw, gh)
+			ctx.SaveState()
 			window.Draw()
+			ctx.RestoreState()
+			ctx.SaveState()
 			window.DrawSubviews()
+			ctx.RestoreState()
+			ctx.SaveState()
 			window.DrawSubwindows()
+			ctx.RestoreState()
 		Next
 		
-		SetOrigin(ox, oy)
-		SetViewport(vx, vy, vw, vh)
+		If _popup Then
+			Local point:NPoint = _temp_rect.origin
+			point.Set(0, 0)
+			_popup.ConvertPointToScreen(point, point)
+			ctx.MoveToPoint(point.x, point.y)
+			ctx.SetClipping(0, 0, gw, gh)
+			ctx.SaveState()
+			_popup.Draw()
+			ctx.RestoreState()
+			ctx.SaveState()
+			_popup.DrawSubviews()
+			ctx.RestoreState()
+			ctx.SaveState()
+			_popup.DrawSubWindows()
+			ctx.RestoreState()
+		EndIf
+		
+		ctx.RestoreState()
 	End Method
 	
 	Method AddWindow(window:NWindow, position:Int=WINDOW_BELOWMAIN)
@@ -225,36 +271,38 @@ Type NGUI
 			Return
 		EndIf
 		If window.CanBecomeMainWindow() Then
-			If window.Superview() = Null Then
+			If _mainWindow Then
+				_mainWindow.LostMainWindow()
+			EndIf
+			
+			If window.Superview() = Null And _windows.Contains(window) Then
 				_windows.Remove(window)
 				_windows.AddLast(window)
 			EndIf
 			_mainWindow = window
+			_mainWindow.BecameMainWindow()
+			PushEvent(TEvent.Create(EVENT_MOUSEMOVE, Self, 0, 0, _mouse_cur.x, _mouse_cur.y))
 		EndIf
 	End Method
+	
+	Method SetPopup(popup:NPopup)
+		If _popup And _popup <> popup Then
+			_popup.Hide()
+		EndIf
+		_popup = popup
+		If popup And _popup <> popup Then
+			popup.Show()
+			PushEvent(TEvent.Create(EVENT_MOUSEMOVE, Self, 0, 0, _mouse_cur.x, _mouse_cur.y))
+		EndIf
+	End Method
+End Type
+
+Type NPopup Extends NView
 End Type
 
 Type NWindow Extends NView
 	Field _modal:Int = False
 	Field _contentView:NView
-	
-	Method MousePressed:NView(button%, x%, y%)
-		Local frame:NRect = Self.Frame(_temp_rect)
-		frame.origin.Set(0,0)
-		
-		If frame.Contains(x, y) Then
-			If Not IsMainWindow() And CanBecomeMainWindow() Then
-				MakeMainWindow()
-			EndIf
-		EndIf
-		
-		Local view:NView = Super.MousePressed(button, x, y)
-		If view Then
-			Return view
-		Else
-			Return Self
-		EndIf
-	End Method
 	
 	Method InitWithFrame:NWindow(frame:NRect)
 		Super.InitWithFrame(frame)
@@ -270,6 +318,12 @@ Type NWindow Extends NView
 	Method Draw()
 		DrawFrame()
 		Super.Draw()
+	End Method
+	
+	Method LostMainWindow()
+	End Method
+	
+	Method BecameMainWindow()
 	End Method
 	
 	Method ClipsSubviews:Int()
@@ -450,105 +504,36 @@ Type NView
 		Return view
 	End Method
 	
-	Method MousePressed:NView(button%, x%, y%)
-		Bounds(_temp_rect)
-'		If _temp_rect.Contains(x, y) Then
-			x :- _temp_rect.origin.x
-			y :- _temp_rect.origin.y
-			Local point:NPoint = New NPoint
-			Local top:TLink = _subviews.LastLink()
-			Local subview:NView
-			While top
-				subview = NView(top.Value())
-				
-				If subview.Hidden() Or subview.Disabled(False) Or Not NWindow(subview) Then
-					top = top.PrevLink()
-					Continue
-				EndIf
-				
-				subview.Frame(_temp_rect)
-'				If _temp_rect.Contains(x, y) Then
-					point.Set(x-_temp_rect.origin.x, y-_temp_rect.origin.y)
-					Local view:NView = subview.MousePressed(button, point.x, point.y)
-					If view Then
-						Return view
-					EndIf
-'				EndIf
-				top = top.PrevLink()
-			Wend
-			
-			top = _subviews.LastLink()
-			While top
-				subview = NView(top.Value())
-				
-				If subview.Hidden() Or subview.Disabled(False) Or NWindow(subview) Then
-					top = top.PrevLink()
-					Continue
-				EndIf
-				
-				subview.Frame(_temp_rect)
-'				If _temp_rect.Contains(x, y) Then
-					point.Set(x-_temp_rect.origin.x, y-_temp_rect.origin.y)
-					Local view:NView = subview.MousePressed(button, point.x, point.y)
-					If view Then
-						Return view
-					EndIf
-'				EndIf
-				top = top.PrevLink()
-			Wend
-'		EndIf
-		
-		Return Null
+	Method IsSubviewOf:Int(view:NView)
+		Local sv:NView = _superview
+		While sv
+			If sv = view Then
+				Return True
+			EndIf
+			sv = sv.Superview()
+		Wend
+		Return False
 	End Method
 	
-	Method MouseMoved:NView(x%, y%, dx%, dy%)
-		Bounds(_temp_rect)
-		x :- _temp_rect.origin.x
-		y :- _temp_rect.origin.y
-		Local point:NPoint = New NPoint
-		' TODO: reverse order of iteration to hit top-most first and bottom-most last
-		Local subview:NView
-		Local top:TLink = _subviews.LastLink()
-		While top
-			subview = NView(top.Value())
-			If subview.Hidden() Or subview.Disabled(False) Or Not NWindow(subview) Then
-				top = top.PrevLink()
-				Continue
-			EndIf
-			
-			subview.Frame(_temp_rect)
-			point.Set(x-_temp_rect.origin.x, y-_temp_rect.origin.y)
-			Local view:NView = subview.MouseMoved(point.x, point.y, dx, dy)
-			If view Then
-				Return view
-			EndIf
-			top = top.PrevLink()
-		Wend
-		
-		top = _subviews.LastLink()
-		While top
-			subview = NView(top.Value())
-			If subview.Hidden() Or subview.Disabled(False) Or NWindow(subview) Then
-				top = top.PrevLink()
-				Continue
-			EndIf
-			
-			subview.Frame(_temp_rect)
-			point.Set(x-_temp_rect.origin.x, y-_temp_rect.origin.y)
-			Local view:NView = subview.MouseMoved(point.x, point.y, dx, dy)
-			If view Then
-				Return view
-			EndIf
-			top = top.PrevLink()
-		Wend
-		
-		Local frame:NRect = Frame(_temp_rect)
-		frame.origin.Set(0, 0)
-		If frame.Contains(x, y) Then
-			Return Self
+	
+	Method MousePressed(button%, x%, y%)
+		If _superview Then
+			Local origin:NPoint = New NPoint
+			origin.Set(x, y)
+			origin.Add(_superview.Bounds(_temp_rect).origin, origin)
+			origin.Add(_frame.origin, origin)
+			_superview.MousePressed(button, origin.x, origin.y)
 		EndIf
-		
-		Return Null
+	End Method
+	
+	Method MouseMoved(x%, y%, dx%, dy%)
+		If _superview Then
+			Local origin:NPoint = New NPoint
+			origin.Set(x, y)
+			origin.Add(_superview.Bounds(_temp_rect).origin, origin)
+			origin.Add(_frame.origin, origin)
+			_superview.MouseMoved(origin.x, origin.y, dx, dy)
+		EndIf
 	End Method
 	
 	Method MouseReleased%(button%, x%, y%)
@@ -598,13 +583,17 @@ Type NView
 			If NWindow(subview) Then
 				Local frame:NRect = subview.Frame(_temp_rect)
 				frame.origin.Set(0, 0)
-				subview.ConvertPointToScreen(frame.origin, frame.origin)
+				frame.origin = subview.ConvertPointToScreen(frame.origin, frame.origin)
 				SetOrigin(Floor(frame.origin.x), Floor(frame.origin.y))
 				
 				' draw view
 				subview.Draw()
 			
-				_ClipSubview(subview, vx, vy, vw, vh)
+				clip = subview.Bounds(clip)
+				clip.origin.x :+ frame.origin.x
+				clip.origin.y :+ frame.origin.y
+				SetViewport(clip.origin.x, clip.origin.y, clip.size.width, clip.size.height)
+				
 				' draw subviews
 				subview.DrawSubviews()
 			EndIf
@@ -621,10 +610,13 @@ Type NView
 		Local tvx%, tvy%, tvw%, tvh%
 		GetViewport(tvx, tvy, tvw, tvh)
 		
-		If _superview = Null And ClipsSubviews() Then
+		If (_superview = Null Or NPopup(Self)) And ClipsSubviews() Then
 			Frame(_temp_rect)
 			ClippingRect(clip)
-			SetViewport(_temp_rect.origin.x+clip.origin.x, _temp_rect.origin.y+clip.origin.y, clip.size.width, clip.size.height)
+			Local point:NPoint = _temp_rect.origin
+			point.Set(0, 0)
+			point = ConvertPointToScreen(point, point)
+			SetViewport(point.x+clip.origin.x, point.y+clip.origin.y, clip.size.width, clip.size.height)
 		EndIf
 		
 		Local ox#, oy#
@@ -643,7 +635,7 @@ Type NView
 				Continue
 			EndIf
 			
-			If NWindow(subview) Then
+			If NWindow(subview) Or NPopup(subview) Then
 				Continue
 			EndIf
 			
@@ -680,6 +672,16 @@ Type NView
 		Else
 			SetViewport(vx, vy, vw, vh)
 		EndIf
+	End Method
+	
+	Method FocusGained()
+	End Method
+	
+	Method FocusLost()
+	End Method
+	
+	Method IsFocused%() Final
+		Return (ActiveGUI._focalView = Self)
 	End Method
 	
 	Method Frame:NRect(out:NRect=Null)
@@ -830,6 +832,8 @@ Type NView
 			oy :- bounds.origin.y
 			sv = sv.Superview()
 		Wend
+		
+		Return out
 	End Method
 	
 	Method ConvertPointToScreen:NPoint(point:NPoint, out:NPoint=Null)
@@ -891,8 +895,33 @@ Type NView
 		Return out
 	End Method
 	
+	Method ViewForPoint:NView(point:NPoint)
+		Local temppoint:NPoint = New NPoint
+		Local top:TLink = _subviews.LastLink()
+		Local boundsOrigin:NPoint = Bounds(_temp_rect).origin.Clone()
+		Bounds(_temp_rect)
+		While top
+			Local subview:NView = NView(top.Value())
+			If Not subview.Hidden() Then
+				temppoint.CopyValues(point)
+				subview.Frame(_temp_rect)
+				temppoint.Subtract(_temp_rect.origin, temppoint)
+				temppoint.Subtract(boundsOrigin, temppoint)
+				subview = subview.ViewForPoint(temppoint)
+				If subview Then Return subview
+			EndIf
+			top = top.PrevLink()
+		Wend
+		Frame(_temp_rect)
+		_temp_rect.origin.Set(0, 0)
+		If _temp_rect.ContainsPoint(point) Then
+			Return Self
+		EndIf
+		Return Null
+	End Method
+	
 	Method ClipsSubviews:Int()
-		Return True
+		Return False
 	End Method
 	
 	Method SetText(text$)
@@ -911,12 +940,28 @@ Type NView
 		Return _hidden
 	End Method
 	
+	Method Show() Final
+		SetHidden(False)
+	End Method
+	
+	Method Hide() Final
+		SetHidden(True)
+	End Method
+	
 	Method SetDisabled(disabled%)
 		_disabled = disabled
 	End Method
 	
 	Method Disabled%(_recurse:Int=False)
 		Return _disabled Or (_recurse And (_superview And _superview.Disabled()))
+	End Method
+	
+	Method Disable() Final
+		SetDisabled(True)
+	End Method
+	
+	Method Enable() Final
+		SetDisabled(False)
 	End Method
 	
 	Method Subviews:TList()
@@ -936,3 +981,29 @@ Type NView
 		If handler Then handler.Fire(Self, eventdata)
 	End Method
 End Type
+
+' Auxiliary functions for drawing text
+
+Function FitTextToWidth$(str$, width%)
+	If width <= 0 Then
+		Return ""
+	EndIf
+	
+	Local trunc$=str
+	Local twidth% = TextWidth(trunc)
+
+	If width < twidth Then
+		Repeat
+			str = str[..str.Length-2]
+			trunc = str+"..."
+			twidth = TextWidth(trunc)
+		Until str.Length=0 Or twidth<width
+	EndIf
+	
+	If width < twidth Then
+		trunc = ""
+	EndIf
+	
+	Return trunc
+End Function
+

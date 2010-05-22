@@ -28,7 +28,7 @@ SuperStrict
 
 Import "ImageDrawable.bmx"
 
-Type NNinePatch Extends NImageDrawable
+Type NNinePatchDrawable Extends NImageDrawable
 	Field _left_border#, _right_border#, _top_border#, _bottom_border#
 	Field _left_scale#=1.0, _right_scale#=1.0, _top_scale#=1.0, _bottom_scale#=1.0
 	
@@ -82,15 +82,11 @@ Type NNinePatch Extends NImageDrawable
 		EndIf
 	End Method
 	
-	Method InitWithImage:NNinePatch(img:TImage)
-		If Super.InitWithImage(img) Then
-			SetAllScales(1.0)
-			SetAllBorders(8.0)
-		EndIf
-		Return Self
+	Method InitWithImage:NNinePatchDrawable(img:TImage)
+		Return InitWithImageAndBorders(img)
 	End Method
 	
-	Method InitWithImageAndBorders:NNinePatch(img:TImage, left_border#=8, right_border#=8, top_border#=8, bottom_border#=8, border_scale#=1.0)
+	Method InitWithImageAndBorders:NNinePatchDrawable(img:TImage, left_border#=8, right_border#=8, top_border#=8, bottom_border#=8, border_scale#=1.0)
 		If Super.InitWithImage(img) Then
 			_left_border = left_border
 			_right_border = right_border

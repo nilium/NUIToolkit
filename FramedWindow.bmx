@@ -30,10 +30,11 @@ Import "GUI.bmx"
 Import "NinePatch.bmx"
 
 Type NFramedWindow Extends NWindow
-	Global FramePatch:NDrawable = New NNinePatch.InitWithImageAndBorders(LoadAnimImage("res/window.png", 256, 256, 0, 2), 10, 10, 26, 10, 1)
+	Global FramePatch:NNinePatchDrawable = New NNinePatchDrawable.InitWithImageAndBorders(LoadAnimImage("res/window.png", 256, 256, 0, 2), 10, 10, 26, 10, 1)
 	Field _dragging:Int = 0 ' 1 = move window, 2 = resize
 	Field _drag_x:Int, _drag_y:Int
 	Field _twidth#, _theight#
+	Field _elltext$
 	
 	Method InitWithFrame:NFramedWindow(frame:NRect)
 		Super.InitWithFrame(frame)
@@ -42,21 +43,18 @@ Type NFramedWindow Extends NWindow
 	
 	Method DrawFrame()
 		Local frame:NRect = Frame(_temp_rect)
-		FramePatch.DrawRect(0, 0, frame.size.width, frame.size.height, Not IsMainWindow())
-		Local t$ = _fitTextToWidth(_text, frame.size.width-4)
-		Local cx# = Floor((frame.size.width-TextWidth(t))*.5)
-		Local cy# = Floor(12-TextHeight(t)*.5)
-		DrawText t, cx, cy
+		FramePatch.DrawRect(0, 0, frame.size.width, frame.size.height, (Not IsMainWindow() And (Not ActiveGUI._mainWindow Or ActiveGUI._mainWindow.Root() <> Self)))
+		If _elltext Then
+			Local cx# = Floor((frame.size.width-_twidth)*.5)
+			Local cy# = Floor(12-_theight*.5)
+			DrawText _elltext, cx, cy
+		EndIf
 	End Method
 	
-	Method MousePressed:NView(button%, x%, y%)
-		Local r:NView = Super.MousePressed(button, x, y)
-		If r <> Null And r <> Self Then
-			Return r
-		EndIf
-		
-		Local frame:NRect
+	Method MousePressed(button%, x%, y%)
 		If button = 1 Then
+			Local frame:NRect
+			
 			frame = Self.Frame(_temp_rect)
 			frame.Set(frame.size.width - 24, frame.size.height - 24, 24, 24)
 			If frame.Contains(x, y) Then
@@ -67,7 +65,7 @@ Type NFramedWindow Extends NWindow
 				Self.Frame(frame)
 				_drag_x = frame.size.width - x
 				_drag_y = frame.size.height - y
-				Return Self
+				Return
 			EndIf
 			
 			Self.Frame(frame)
@@ -75,32 +73,26 @@ Type NFramedWindow Extends NWindow
 			frame.size.height = 24
 			If frame.Contains(x, y) Then
 				_dragging = 1
-				Return Self
-			EndIf
-			
-			Self.Frame(frame)
-			frame.origin.Set(0, 0)
-			If frame.Contains(x, y) Then
-				Return Self
+				Return
 			EndIf
 		EndIf
 		
-		Return Null
+		Super.MousePressed(button, x, y)
 	End Method
 	
-	Method MouseMoved:NView(x%, y%, dx%, dy%)
+	Method MouseMoved(x%, y%, dx%, dy%)
 		If _dragging = 1 Then
 			_frame.origin.x :+ dx
 			_frame.origin.y :+ dy
-			Return Self
+			Return
 		ElseIf _dragging = 2 Then
 			Local frame:NRect = Frame(_temp_rect)
 			frame.size.Set(Max(50, x+_drag_x), Max(50, y+_drag_y))
 			SetFrame(frame)
-			Return Self
+			Return
 		EndIf
 		
-		Return Super.MouseMoved(x, y, dx, dy)
+		Super.MouseMoved(x, y, dx, dy)
 	End Method
 	
 	Method MouseReleased(button%, x%, y%)
@@ -109,19 +101,13 @@ Type NFramedWindow Extends NWindow
 		EndIf
 	End Method
 	
-	Method MouseEntered()
-	End Method
-	
-	Method MouseLeft()
-	End Method
-	
 	Method Bounds:NRect(out:NRect=Null)
 		out = Super.Bounds(out)
 		
-		out.origin.x :+ 5
+		out.origin.x :+ 3
 		out.origin.y :+ 24
-		out.size.width :- 10
-		out.size.height :- 29
+		out.size.width :- 6
+		out.size.height :- 27
 		
 		Return out
 	End Method
@@ -131,31 +117,11 @@ Type NFramedWindow Extends NWindow
 	End Method
 
 	Method SetText(text$)
+		_elltext = FitTextToWidth(text, Frame(_temp_rect).size.width-4)
 		If text Then
-			_twidth = TextWidth(text)
-			_theight = TextHeight(text)
+			_twidth = TextWidth(_elltext)
+			_theight = TextHeight(_elltext)
 		EndIf
 		Super.SetText(text)
 	End Method
-	
-	Function _fitTextToWidth$(str$, width%)
-		Local spidx%=str.FindLast(" ")
-		Local trunc$=str
-		Rem
-		While width < TextWidth(trunc) And -1<spidx
-			If spidx = -1 Then
-				Exit
-			EndIf
-			trunc = str[..spidx]+"..."
-			spidx=str.FindLast(" ", spidx)
-		Wend
-		EndRem
-		If width < TextWidth(trunc) Then
-			Repeat
-				str = str[..str.Length-2]
-				trunc = str+"..."
-			Until str.Length=0 Or TextWidth(trunc)<width
-		EndIf
-		Return trunc
-	End Function
 End Type
