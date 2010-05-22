@@ -89,6 +89,9 @@ Type NGUI
 		DisableEventHook()
 	End Method
 	
+	Rem
+	bbdoc: Enables a hook for the #EmitEventHook that automates propagation of events (instead of sending them into the NGUI instance via #PushEvent).  By default, the hook is disabled.
+	EndRem
 	Method EnableEventHook()
 		If _active = False Then
 			_active = True
@@ -96,6 +99,9 @@ Type NGUI
 		EndIf
 	End Method
 	
+	Rem
+	bbdoc: Disables the hook that was previously enabled by #EnableEventHook.
+	EndRem
 	Method DisableEventHook()
 		If _active Then
 			_active = False
@@ -103,6 +109,9 @@ Type NGUI
 		EndIf
 	End Method
 	
+	Rem
+	bbdoc: Pushes an event to the GUI and propagates it through the view hierarchy.  Only accepts EVENT_MOUSEDOWN, EVENT_MOUSEUP, EVENT_MOUSERELEASE events.
+	EndRem
 	Method PushEvent(evt:TEvent)
 		Select evt.id
 			Case EVENT_MOUSEDOWN
@@ -215,6 +224,9 @@ Type NGUI
 		End Select
 	End Method
 	
+	Rem
+	bbdoc: Draws all root windows, subwindows, and popups and their associated view hierarchies.
+	EndRem
 	Method Draw()
 		Local gw% = GraphicsWidth()
 		Local gh% = GraphicsHeight()
@@ -260,6 +272,22 @@ Type NGUI
 		ctx.RestoreState()
 	End Method
 	
+	Rem
+	bbdoc: Adds a root window to the GUI, optionally specifying its position relative to other windows.
+	
+	Windows can specify their position as one of the following:
+	
+	[ @{Position value} | @{Window position}
+	
+	* @WINDOW_BELOWMAIN | Places the window just below the main window.
+	
+	* @WINDOW_RAISED | Places the window above all windows without making it the main window.
+	
+	* @WINDOW_RAISEDMAIN | Places the window above all windows and makes it the main window.
+	
+	* @WINDOW_BELOWALL | Places the window below all other windows.
+	]
+	EndRem
 	Method AddWindow(window:NWindow, position:Int=WINDOW_BELOWMAIN)
 		Assert window Else "Window is Null"
 		Assert window._superview = Null Else "Subwindows cannot be attached to a GUI instance"
@@ -276,12 +304,18 @@ Type NGUI
 		EndIf
 	End Method
 	
+	Rem
+	bbdoc: Removes a root window.  If the window is the main window, no window will be main window afterward.
+	EndRem
 	Method RemoveWindow(window:NWindow)
 		If _mainWindow = window Then
 			_mainWindow = Null
 		EndIf
 	End Method
 	
+	Rem
+	bbdoc: Sets the current main window.  Can be Null.
+	EndRem
 	Method SetMainWindow(window:NWindow)
 		If window = _mainWindow Then
 			Return
