@@ -468,21 +468,38 @@ Const NVIEW_ABOVE:Int = 1
 Const NVIEW_BELOW:Int = -1
 
 Type NEventHandler
-	Field _callback%(sender:NView, eventdata:TMap)
+	Method Fire(sender:NView, eventname$, eventdata:TMap) Abstract
+End Type
+
+Type NEventHandlerCallback Extends NEventHandler
+	Field _callback%(sender:NView, eventname$, eventdata:TMap)
 	
-	Method InitWithCallback:NEventHandler(callback%(sender:NView, eventdata:TMap))
+	Method InitWithCallback:NEventHandler(callback%(sender:NView, eventname$, eventdata:TMap))
 		_callback = callback
 		Return Self
 	End Method
 	
-	Method Fire(sender:NView, eventdata:TMap)
-		If _callback Then _callback(sender, eventdata)
+	Method Fire(sender:NView, eventname$, eventdata:TMap)
+		If _callback Then _callback(sender, eventname, eventdata)
 	End Method
 End Type
 
-Function MakeEventHandler:NEventHandler(callback%(sender:NView, eventdata:TMap))
-	Return New NEventHandler.InitWithCallback(callback)
+Function MakeEventHandler:NEventHandler(callback%(sender:NView, eventname$, eventdata:TMap))
+	Return New NEventHandlerCallback.InitWithCallback(callback)
 End Function
+
+Const NFrameChangedEvent$="FrameChanged"
+Const NBoundsChangedEvent$="BoundsChanged"
+Const NMousePressedEvent$="MousePressed"
+Const NMouseReleasedEvent$="MouseReleased"
+Const NMouseMovedEvent$="MouseMoved"
+Const NMouseEnteredEvent$="MouseEntered"
+Const NMouseLeftEvent$="MouseLeft"
+Const NFocusGainedEvent$="FocusGained"
+Const NFocusLostEvent$="FocusLost"
+Const NDisabledChangedEvent$="DisabledChanged"
+Const NVisibilityChangedEvent$="VisibilityChanged"
+Const NTextChangedEvent$="TextChanged"
 
 Type NView
 	Field _name$=""
@@ -1051,17 +1068,32 @@ Type NView
 		Return _subviews.Copy()
 	End Method
 	
-	Method SetEventHandler(eventname$, handler:NEventHandler)
-		_eventhandlers.Insert(eventname, handler)
+	Method AddEventHandler(eventname$, handler:NEventHandler)
+		Assert handler Else "Event handler is Null"
+		Local handlers:TList = TList(_eventhandlers.ValueForKey(eventname))
+		If handlers = Null Then
+			handlers = New TList
+			_eventhandlers.Insert(eventname, handlers)
+		EndIf
+		handlers.AddLast(handler)
 	End Method
 	
-	Method RemoveEventHandler(eventname$, handler:NEventHandler)
-		_eventhandlers.Remove(eventname)
+	Method RemoveEventHandler(eventname$, handler:NEventHandler=Null)
+		Local handlers:TList = TList(_eventhandlers.ValueForKey(eventname))
+		If handlers = Null Then Return
+		If handler Then
+			handlers.Remove(handler)
+		Else
+			handlers.Clear()
+		EndIf
 	End Method
 	
-	Method FireEvent(name$, eventdata:TMap)
-		Local handler:NEventHandler = NEventHandler(_eventhandlers.ValueForKey(name))
-		If handler Then handler.Fire(Self, eventdata)
+	Method FireEvent(eventname$, eventdata:TMap=Null)
+		Local handlers:TList = TList(_eventhandlers.ValueForKey(eventname))
+		If handlers = Null Then Return
+		For Local handler:NEventHandler = EachIn handlers
+			handler.Fire(Self, eventname, eventdata)
+		Next
 	End Method
 End Type
 
