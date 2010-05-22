@@ -100,20 +100,22 @@ Type NButton Extends NView
 	End Method
 	
 	Method Draw()
-		Local bounds:NRect = Bounds(_temp_rect)
-		SetColor(255, 255, 255)
-		Local hilite_fade! = _hilite_fade*(1.0-_down_fade)
-		SetAlpha(1.0)
-		_drawable.DrawRect(0, 0, bounds.size.width, bounds.size.height, 3*Disabled(True))
-		If hilite_fade > 0.02 And _down_fade < .98 Then
-			SetAlpha(hilite_fade)
-			_drawable.DrawRect(0, 0, bounds.size.width, bounds.size.height, 1)
+		If _drawable Then
+			Local bounds:NRect = Bounds(_temp_rect)
+			SetColor(255, 255, 255)
+			Local hilite_fade! = _hilite_fade*(1.0-_down_fade)
+			SetAlpha(1.0)
+			_drawable.DrawRect(0, 0, bounds.size.width, bounds.size.height, 3*Disabled(True))
+			If hilite_fade > 0.02 And _down_fade < .98 Then
+				SetAlpha(hilite_fade)
+				_drawable.DrawRect(0, 0, bounds.size.width, bounds.size.height, 1)
+			EndIf
+			If _down_fade > 0.02 Then
+				SetAlpha(_down_fade)
+				_drawable.DrawRect(0, 0, bounds.size.width, bounds.size.height, 2)
+			EndIf
+			SetAlpha(1.0)
 		EndIf
-		If _down_fade > 0.02 Then
-			SetAlpha(_down_fade)
-			_drawable.DrawRect(0, 0, bounds.size.width, bounds.size.height, 2)
-		EndIf
-		SetAlpha(1.0)
 		DrawCaption()
 		Super.Draw()
 	End Method
@@ -144,7 +146,6 @@ Type NButton Extends NView
 	End Method
 	
 	Method SetDrawable(drawable:NDrawable)
-		Assert drawable
 		_drawable = drawable
 	End Method
 	
