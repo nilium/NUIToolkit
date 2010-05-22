@@ -50,34 +50,42 @@ Type NNinePatchDrawable Extends NImageDrawable
 		Local sw# = _width-lw-rw
 		Local sh# = _height-th-bh
 		
-		Local handlex#, handley#
+		Local handlex#, handley#, scalex#, scaley#
 		GetHandle(handlex,handley)
+		GetScale(scalex, scaley)
+		
+		x :- scalex*handlex
+		y :- scaley*handley
 		
 		If tb Then
 			If lb Then
 				DrawSubImageRect(_img, x, y, lw*_left_scale, th*_top_scale, 0, 0, lw, th, 0, 0, state)
 			EndIf
-			DrawSubImageRect(_img, x+lw*_left_scale, y, dw, th*_top_scale, lw, 0, sw, th, 0, 0, state )
+			DrawSubImageRect(_img, x+lw*_left_scale*scalex, y, dw, th*_top_scale, lw, 0, sw, th, 0, 0, state )
 			If rb Then
-				DrawSubImageRect(_img, x+dw+lw*_left_scale, y, rw*_right_scale, th*_top_scale, sw+lw, 0, rw, th, 0, 0, state)
+				DrawSubImageRect(_img, x+dw*scalex+lw*_left_scale*scalex, y, rw*_right_scale, th*_top_scale, sw+lw, 0, rw, th, 0, 0, state)
 			EndIf
 		EndIf
 		
+		y :+ th*_top_scale*scaley
+		
 		If lb Then
-			DrawSubImageRect(_img, x, y+th*_top_scale, lw*_left_scale, dh, 0, th, lw, sh, 0, 0, state)
+			DrawSubImageRect(_img, x, y, lw*_left_scale, dh, 0, th, lw, sh, 0, 0, state)
 		EndIf
-		DrawSubImageRect(_img, x+lw*_left_scale, y+th*_top_scale, dw, dh, lw, th, sw, sh, 0, 0, state )
+		DrawSubImageRect(_img, x+lw*_left_scale*scalex, y, dw, dh, lw, th, sw, sh, 0, 0, state )
 		If rb Then
-			DrawSubImageRect(_img, x+dw+lw*_left_scale, y+th*_top_scale, rw*_right_scale, dh, sw+lw, th, rw, sh, 0, 0, state)
+			DrawSubImageRect(_img, x+(dw+lw*_left_scale)*scalex, y, rw*_right_scale, dh, sw+lw, th, rw, sh, 0, 0, state)
 		EndIf
+		
+		y :+ dh*scaley
 		
 		If tb Then
 			If lb Then
-				DrawSubImageRect(_img, x, y+dh+th*_top_scale, lw*_left_scale, bh*_bottom_scale, 0, sh+th, lw, bh, 0, 0, state)
+				DrawSubImageRect(_img, x, y, lw*_left_scale, bh*_bottom_scale, 0, sh+th, lw, bh, 0, 0, state)
 			EndIf
-			DrawSubImageRect(_img, x+lw*_left_scale, y+dh+th*_top_scale, dw, bh*_bottom_scale, lw, sh+th, sw, bh, 0, 0, state )
+			DrawSubImageRect(_img, x+lw*_left_scale*scalex, y, dw, bh*_bottom_scale, lw, sh+th, sw, bh, 0, 0, state )
 			If rb Then
-				DrawSubImageRect(_img, x+dw+lw*_left_scale, y+dh+th*_top_scale, rw*_right_scale, bh*_bottom_scale, sw+lw, sh+th, rw, bh, 0, 0, state)
+				DrawSubImageRect(_img, x+(dw+lw*_left_scale)*scalex, y, rw*_right_scale, bh*_bottom_scale, sw+lw, sh+th, rw, bh, 0, 0, state)
 			EndIf
 		EndIf
 	End Method
