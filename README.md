@@ -24,7 +24,7 @@ things that Android would).
 
 First, clone this repository.  You've probably already done this,
 so then you should pull down the
-(NUIT.gfx)[http://github.com/nilium/NUIT.gfx] submodule:
+[NUIT.gfx](http://github.com/nilium/NUIT.gfx) submodule:
 
     $ git submodule init
 	$ git submodule update
