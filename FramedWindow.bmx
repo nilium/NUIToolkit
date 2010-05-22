@@ -99,17 +99,24 @@ Type NFramedWindow Extends NWindow
 		If button = 1 Then
 			_dragging = False
 		EndIf
+		Super.MouseReleased(button, x, y)
 	End Method
 	
 	Method Bounds:NRect(out:NRect=Null)
 		out = Super.Bounds(out)
 		
-		out.origin.x :+ 3
-		out.origin.y :+ 24
-		out.size.width :- 6
-		out.size.height :- 27
+		out.origin.x :+ 1
+		out.origin.y :+ 22
+		out.size.width :- 2
+		out.size.height :- 43
 		
 		Return out
+	End Method
+	
+	Method SetFrame(frame:NRect)
+		frame.size.width = Max(64, frame.size.width)
+		frame.size.height = Max(64, frame.size.height)
+		Super.SetFrame(frame)
 	End Method
 	
 	Method ClippingRect:NRect(out:NRect=Null)
