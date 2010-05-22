@@ -88,11 +88,11 @@ Type NScrollbar Extends NView
 	Method _ScrollLength#() Abstract
 	
 	Method _BarSize#()
-		Return Max(24, (_step/(_max-_min))*(_ScrollLength()-BAR_PAD*2))
+		Return Floor(Max(24, (_step/(_max-_min))*(_ScrollLength()-BAR_PAD*2)))
 	End Method
 	
 	Method _BarPos#()
-		Return ((_value-_min)/(_max-_min))*(_ScrollLength()-_BarSize()-BAR_PAD*2)
+		Return Floor(((_value-_min)/(_max-_min))*(_ScrollLength()-_BarSize()-BAR_PAD*2))
 	End Method
 	
 	Method _SetValueForOffset(off!)
