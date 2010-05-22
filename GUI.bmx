@@ -122,17 +122,23 @@ Type NGUI
 				_mouse_cur.x = evt.x
 				_mouse_cur.y = evt.y
 				
-				If _popup Then
+				If _popup And Not _popup.Hidden() Then
 					point = _popup.ConvertPointFromScreen(_mouse_cur, point)
 					view = _popup.ViewForPoint(point)
 					If view = Null Then
 						_popup.Hide()
 						_popup = Null
 					EndIf
+				ElseIf _popup And _popup.Hidden() Then
+					_popup = Null
 				EndIf
 				
 				While top And Not view
 					Local window:NWindow = NWindow(top.Value())
+					If window.Hidden() Then
+						top = top.PrevLink()
+						Continue
+					EndIf
 					point = window.ConvertPointFromScreen(_mouse_cur, point)
 					view = window.ViewForPoint(point)
 					top = top.PrevLink()
@@ -152,10 +158,11 @@ Type NGUI
 					If view Then view.FocusGained()
 				EndIf
 				
-				If view Then
+				If view And Not view.Disabled() Then
 					_mouseWindow = view
 					point = view.ConvertPointFromScreen(_mouse_cur, point)
 					view.MousePressed(evt.data, point.x, point.y)
+'					view.MouseMoved(point.x, point.y, evt.x - _mouse_prev.x, evt.y - _mouse_prev.y)
 					Local window:NWindow = NWindow(view.Root())
 					If window Then
 						SetMainWindow(window)
@@ -196,9 +203,11 @@ Type NGUI
 					Local point:NPoint
 					
 					Local view:NView
-					If _popup Then
+					If _popup And Not _popup.Hidden() Then
 						point = _popup.ConvertPointFromScreen(_mouse_cur, point)
 						view = _popup.ViewForPoint(point)
+					ElseIf _popup And _popup.Hidden() Then
+						_popup = Null
 					EndIf
 					
 					Local window:NWindow = _mainWindow
@@ -217,7 +226,7 @@ Type NGUI
 						EndIf
 					EndIf
 					
-					If view Then
+					If view And Not view.Disabled() Then
 						view.MouseMoved(point.x, point.y, dx, dy)
 					EndIf
 				EndIf
@@ -253,20 +262,24 @@ Type NGUI
 		Next
 		
 		If _popup Then
-			Local point:NPoint = _temp_rect.origin
-			point.Set(0, 0)
-			_popup.ConvertPointToScreen(point, point)
-			ctx.MoveToPoint(point.x, point.y)
-			ctx.SetClipping(0, 0, gw, gh)
-			ctx.SaveState()
-			_popup.Draw()
-			ctx.RestoreState()
-			ctx.SaveState()
-			_popup.DrawSubviews()
-			ctx.RestoreState()
-			ctx.SaveState()
-			_popup.DrawSubWindows()
-			ctx.RestoreState()
+			If _popup.Hidden() Then
+				_popup = Null
+			Else
+				Local point:NPoint = _temp_rect.origin
+				point.Set(0, 0)
+				_popup.ConvertPointToScreen(point, point)
+				ctx.MoveToPoint(Floor(point.x), Floor(point.y))
+				ctx.SetClipping(0, 0, gw, gh)
+				ctx.SaveState()
+				_popup.Draw()
+				ctx.RestoreState()
+				ctx.SaveState()
+				_popup.DrawSubviews()
+				ctx.RestoreState()
+				ctx.SaveState()
+				_popup.DrawSubWindows()
+				ctx.RestoreState()
+			EndIf
 		EndIf
 		
 		ctx.RestoreState()
@@ -302,6 +315,10 @@ Type NGUI
 		ElseIf position = WINDOW_BELOWALL Then
 			_windows.AddFirst(window)
 		EndIf
+		
+		If _mainWindow = Null And position <> WINDOW_RAISEDMAIN Then
+			SetMainWindow(window)
+		EndIf
 	End Method
 	
 	Rem
@@ -320,7 +337,7 @@ Type NGUI
 		If window = _mainWindow Then
 			Return
 		EndIf
-		If window.CanBecomeMainWindow() Then
+		If window And window.CanBecomeMainWindow() Then
 			If _mainWindow Then
 				_mainWindow.LostMainWindow()
 			EndIf
@@ -332,15 +349,20 @@ Type NGUI
 			_mainWindow = window
 			_mainWindow.BecameMainWindow()
 			PushEvent(TEvent.Create(EVENT_MOUSEMOVE, Self, 0, 0, _mouse_cur.x, _mouse_cur.y))
+		ElseIf window = Null And _mainWindow Then
+			_mainWindow.LostMainWindow()
+			_mainWindow = Null
+			PushEvent(TEvent.Create(EVENT_MOUSEMOVE, Self, 0, 0, _mouse_cur.x, _mouse_cur.y))
 		EndIf
 	End Method
 	
 	Method SetPopup(popup:NPopup)
-		If _popup And _popup <> popup Then
+		Local differs:Int = _popup <> popup
+		If _popup And differs Then
 			_popup.Hide()
 		EndIf
 		_popup = popup
-		If popup And _popup <> popup Then
+		If popup And differs Then
 			popup.Show()
 			PushEvent(TEvent.Create(EVENT_MOUSEMOVE, Self, 0, 0, _mouse_cur.x, _mouse_cur.y))
 		EndIf
