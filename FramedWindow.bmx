@@ -173,13 +173,22 @@ Type NFramedWindow Extends NWindow
 	Method ClippingRect:NRect(out:NRect=Null)
 		Return Bounds(out)
 	End Method
+	
+	Method PerformLayout()
+		_CacheEllipsizedText()
+		Super.PerformLayout()
+	End Method
 
 	Method SetText(text$)
-		_elltext = FitTextToWidth(text, Frame(_temp_rect).size.width-4)
-		If text Then
+		Super.SetText(text)
+		_CacheEllipsizedText()
+	End Method
+	
+	Method _CacheEllipsizedText()
+		_elltext = FitTextToWidth(_text, Frame(_temp_rect).size.width-20)
+		If _text Then
 			_twidth = TextWidth(_elltext)
 			_theight = TextHeight(_elltext)
 		EndIf
-		Super.SetText(text)
 	End Method
 End Type
