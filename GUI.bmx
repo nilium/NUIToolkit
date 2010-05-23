@@ -160,7 +160,7 @@ Type NGUI
 					If view Then view.FocusGained()
 				EndIf
 				
-				If view And Not view.Disabled() Then
+				If view And Not view.Disabled(True) Then
 					_mouseWindow = view
 					point = view.ConvertPointFromScreen(_mouse_cur, point)
 					view.MousePressed(evt.data, point.x, point.y)
@@ -228,7 +228,7 @@ Type NGUI
 						EndIf
 					EndIf
 					
-					If view And Not view.Disabled() Then
+					If view And Not view.Disabled(True) Then
 						view.MouseMoved(point.x, point.y, dx, dy)
 					EndIf
 				EndIf
