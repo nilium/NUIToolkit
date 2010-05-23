@@ -772,9 +772,11 @@ Type NView
 	End Method
 	
 	Method FocusGained()
+		FireEvent(NFocusGainedEvent, Null)
 	End Method
 	
 	Method FocusLost()
+		FireEvent(NFocusLostEvent, Null)
 	End Method
 	
 	Method IsFocused%() Final
@@ -815,15 +817,17 @@ Type NView
 	End Method
 	
 	Method SetBounds(bounds:NRect)
+		Local copy:NRect = Self.Bounds()
 		If _bounds <> bounds Then
-			If _bounds = Null Then
-				_bounds = bounds.Clone()
-			ElseIf bounds
+			If _bounds And bounds Then
 				_bounds.CopyValues(bounds)
+			ElseIf bounds
+				_bounds = bounds.Clone()
 			Else
-				bounds = Null
+				_bounds = Null
 			EndIf
 		EndIf
+		FireEvent(NBoundsChangedEvent, Null)
 	End Method
 	
 	' Returns the relative clipping rect (this is usually just 0,0,width,height)
@@ -1039,7 +1043,10 @@ Type NView
 	End Method
 	
 	Method SetText(text$)
-		_text = text
+		If text <> _text Then
+			_text = text
+			FireEvent(NTextChangedEvent, Null)
+		EndIf
 	End Method
 
 	Method Text$()
@@ -1047,7 +1054,9 @@ Type NView
 	End Method
 	
 	Method SetHidden(hidden%)
-		_hidden = hidden
+		Local prev:Int = _hidden
+		_hidden = 0<hidden
+		If _hidden <> prev Then FireEvent(NVisibilityChangedEvent, Null)
 	End Method
 	
 	Method Hidden%()
@@ -1063,7 +1072,9 @@ Type NView
 	End Method
 	
 	Method SetDisabled(disabled%)
-		_disabled = disabled
+		Local prev:Int = _disabled
+		_disabled = 0<disabled
+		If _disabled <> prev Then FireEvent(NDisabledChangedEvent, Null)
 	End Method
 	
 	Method Disabled%(_recurse:Int=False)
