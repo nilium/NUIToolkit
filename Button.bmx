@@ -30,7 +30,7 @@ Import "Animation.bmx"
 Import "NinePatch.bmx"
 Import "GUI.bmx"
 
-Const NButtonPressedEvent$="NButtonPressed"
+Const NButtonPressedEvent$="ButtonPressed"
 
 Type NButton Extends NView
 	Global NButtonDrawable:NDrawable = New NNinePatchDrawable.InitWithImageAndBorders(LoadAnimImage("res/button.png", 64, 64, 0, 4), 10, 10, 10, 10, 1)
