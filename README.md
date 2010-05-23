@@ -2,7 +2,7 @@
 
 NUI Toolkit, NUIT for short (pronounced [nut] as in 'newt'),
 is my graphical user interface module-of-sorts written for
-BlitzMax.  Many moons ago (about 5 years' worth) I wrote a,
+BlitzMax.  Many moons ago (about 5 years' worth) I wrote a
 GUI called CowerGUI, and it was a stinking heap of garbage.
 I should know, I wrote it and recently updated it so it would
 actually run again - but this isn't CowerGUI, this is atonement
