@@ -1125,6 +1125,7 @@ End Type
 ' Drawables accessible to all controls
 
 Type NGlobalDrawables Final
+	Global PopupPatch:NNinePatchDrawable = New NNinePatchDrawable.InitWithImageAndBorders(LoadImage("res/popup.png"), 7, 7, 7, 7, 1)
 	Global ShadowPatch:NNinePatchDrawable = New NNinePatchDrawable.InitWithImageAndBorders(LoadImage("res/shadow.png"), 14, 14, 14, 14, 1)
 End Type
 
