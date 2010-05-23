@@ -31,10 +31,15 @@ Import "NinePatch.bmx"
 
 Type NFramedWindow Extends NWindow
 	Global FramePatch:NNinePatchDrawable = New NNinePatchDrawable.InitWithImageAndBorders(LoadAnimImage("res/window.png", 256, 256, 0, 2), 10, 10, 26, 10, 1)
+	Global CloseButton:NImageDrawable = New NImageDrawable.InitWithImage(LoadAnimImage("res/closebtn.png", 16, 16, 0, 2))
 	Field _dragging:Int = 0 ' 1 = move window, 2 = resize
 	Field _drag_x:Int, _drag_y:Int
 	Field _twidth#, _theight#
 	Field _elltext$
+	Field _over_close:Int = False
+	Field _over_time:Int = 0
+	Field _press_time:Int = 0
+	Field _close_press:Int = False
 	
 	Method InitWithFrame:NFramedWindow(frame:NRect)
 		Super.InitWithFrame(frame)
@@ -49,8 +54,20 @@ Type NFramedWindow Extends NWindow
 		SetColor(255, 255, 255)
 		SetAlpha(1)
 		FramePatch.DrawRect(0, 0, frame.size.width, frame.size.height, (Not IsMainWindow() And (Not ActiveGUI._mainWindow Or ActiveGUI._mainWindow.Root() <> Self)))
+		Local t# = Millisecs()
+		Local d# = Min(Max((t - _press_time)/80#, 0), 1)
+		Local o# = Min(Max((t - _over_time)/160#, 0), 1)
+		If _over_close Then
+			o = 1.0 - o
+		EndIf
+		d = 1.0*(_close_press) + d*(1-2*_close_press)
+		SetAlpha((1.0 - o*.8)*d)
+		CloseButton.DrawRect(4, 4, 16, 16, 0)
+		SetAlpha(1.0 - d)
+		CloseButton.DrawRect(4, 4, 16, 16, 1)
+		SetAlpha(1)
 		If _elltext Then
-			Local cx# = Floor((frame.size.width-_twidth)*.5)
+			Local cx# = 16+Floor(((frame.size.width-16)-_twidth)*.5)
 			Local cy# = Floor(12-_theight*.5)
 			DrawText _elltext, cx, cy
 		EndIf
@@ -58,10 +75,17 @@ Type NFramedWindow Extends NWindow
 	
 	Method MousePressed(button%, x%, y%)
 		If button = 1 Then
-			Local frame:NRect
+			Local frame:NRect = _temp_rect
 			
-			frame = Self.Frame(_temp_rect)
-			frame.Set(frame.size.width - 24, frame.size.height - 24, 24, 24)
+			frame.Set( 4, 4, 16, 16)
+			If frame.Contains(x, y) Then
+				_close_press = True
+				_press_time = Millisecs()
+				Return
+			EndIf
+			
+			frame = Self.Frame(frame)
+			frame.Set(frame.size.width - 20, frame.size.height - 20, 20, 20)
 			If frame.Contains(x, y) Then
 				If Not IsMainWindow() Then
 					MakeMainWindow()
@@ -92,17 +116,39 @@ Type NFramedWindow Extends NWindow
 			Return
 		ElseIf _dragging = 2 Then
 			Local frame:NRect = Frame(_temp_rect)
-			frame.size.Set(Max(50, x+_drag_x), Max(50, y+_drag_y))
+			frame.size.Set(x+_drag_x, y+_drag_y)
 			SetFrame(frame)
 			Return
+		Else
+			_temp_rect.Set(4, 4, 16, 16)
+			Local inside:Int = _temp_rect.Contains(x, y)
+			If inside <> _over_close Then
+				_over_time = Millisecs()
+			EndIf
+			_over_close = inside
 		EndIf
 		
 		Super.MouseMoved(x, y, dx, dy)
 	End Method
 	
+	Method MouseLeft()
+		If _over_close Then
+			_over_close = False
+			_over_time = Millisecs()
+		EndIf
+	End Method
+	
 	Method MouseReleased(button%, x%, y%)
 		If button = 1 Then
 			_dragging = False
+			_temp_rect.Set(4, 4, 16, 16)
+			If _close_press Then
+				If _temp_rect.Contains(x, y) Then
+					SetHidden(True)
+				EndIf
+				_press_time = Millisecs()
+			EndIf
+			_close_press = False
 		EndIf
 		Super.MouseReleased(button, x, y)
 	End Method
