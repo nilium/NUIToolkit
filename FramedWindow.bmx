@@ -42,7 +42,12 @@ Type NFramedWindow Extends NWindow
 	End Method
 	
 	Method DrawFrame()
+		SetColor(0, 0, 0)
+		SetAlpha(.4+.2*IsMainWindow())
 		Local frame:NRect = Frame(_temp_rect)
+		NGlobalDrawables.ShadowPatch.DrawRect(-4, 0, frame.size.width+8, frame.size.height+6)
+		SetColor(255, 255, 255)
+		SetAlpha(1)
 		FramePatch.DrawRect(0, 0, frame.size.width, frame.size.height, (Not IsMainWindow() And (Not ActiveGUI._mainWindow Or ActiveGUI._mainWindow.Root() <> Self)))
 		If _elltext Then
 			Local cx# = Floor((frame.size.width-_twidth)*.5)
