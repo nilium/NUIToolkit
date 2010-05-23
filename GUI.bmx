@@ -27,6 +27,8 @@ EndRem
 SuperStrict
 
 Import "Rect.bmx"
+Import "ImageDrawable.bmx"
+Import "NinePatch.bmx"
 Import "GraphicsContext.bmx"
 Import "Max2DGraphicsState.bmx"
 
@@ -1107,6 +1109,12 @@ Type NView
 			handler.Fire(Self, eventname, eventdata)
 		Next
 	End Method
+End Type
+
+' Drawables accessible to all controls
+
+Type NGlobalDrawables Final
+	Global ShadowPatch:NNinePatchDrawable = New NNinePatchDrawable.InitWithImageAndBorders(LoadImage("res/shadow.png"), 14, 14, 14, 14, 1)
 End Type
 
 ' Auxiliary functions for drawing text
