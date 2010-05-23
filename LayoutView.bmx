@@ -30,7 +30,7 @@ Import "GUI.bmx"
 
 Private
 
-Type NLayoutRule Extends NEventHandler
+Type NLayoutRule Extends NEventHandler Abstract
 	Field owner:NRelativeLayout
 	
 	Method Fire(sender:NView, name$, data:TMap)
@@ -70,7 +70,7 @@ Const NLGravityRight%=8
 Const NLGravityHorizontalCenter%=16
 Const NLGravityVerticalCenter%=32
 
-Type NLayoutView Extends NView
+Type NLayoutView Extends NView Abstract
 	Field _layoutQueued:Int = True
 	
 	Method PerformLayout()
